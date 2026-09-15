@@ -23,7 +23,7 @@ dans le dépôt, pas ce qui est prévu.
 | Phase | Contenu | État |
 |---|---|---|
 | 1 | Scaffolding, CLAUDE.md, pre-commit, garde-fou sandbox | fait |
-| 2 | Bot en local, docker compose avec Postgres, tests | à faire |
+| 2 | Bot en local, docker compose avec Postgres, tests | fait |
 | 3 | Bootstrap du state Terraform, infra dev | à faire |
 | 4 | CI/CD GitHub Actions avec OIDC | à faire |
 | 5 | Observabilité, alertes, workbook, dashboard | à faire |
@@ -90,8 +90,20 @@ l'invariant sandbox est appliqué et auditable.
 ## Structure du dépôt
 
 ```
-src/trading_bot/     code du bot, une étape du pipeline par sous-paquet
-tests/               unit/ sans dépendance externe, integration/ avec Postgres
+src/trading_bot/
+  domain/            contrats Pydantic échangés entre les étages
+  exchange/          tout l'I/O venue : protocole, simulateur, ccxt sandbox
+  strategy/          pur : bougies en entrée, Signal en sortie
+  policy/            pur et déterministe : limites de risque, sizing, kill switch
+  execution/         application des fills au grand livre
+  persistence/       modèles SQLAlchemy et accès aux données
+  observability/     logs JSON structurés et masquage des secrets
+  cycle.py           orchestration d'un cycle
+  bootstrap.py       composition root : c'est le seul module qui choisit un backend
+  __main__.py        point d'entrée du job
+migrations/          Alembic
+tests/unit/          aucune dépendance externe
+tests/integration/   nécessite Postgres, marquées `integration`
 infra/bootstrap/     state distant Terraform, appliqué une seule fois
 infra/modules/       modules Terraform réutilisables
 infra/envs/dev/      composition de l'environnement dev
@@ -100,15 +112,35 @@ docs/runbook.md      procédures d'incident
 .github/             workflows CI/CD et Dependabot
 ```
 
+### Modèle de données
+
+| Table | Rôle |
+|---|---|
+| `signals` | ce que la stratégie a conclu, y compris les `hold`, avec son contexte |
+| `orders` | une ligne par intention soumise, avec le motif de la décision |
+| `fills` | exécutions rattachées à un ordre |
+| `positions` | position courante par symbole, coût moyen pondéré |
+| `equity_snapshots` | photo de l'equity à chaque cycle, source du cash et du drawdown |
+
+Un refus est enregistré au même titre qu'un ordre : la question « pourquoi le bot
+n'a rien fait à 14 h 00 » doit avoir une réponse dans la base.
+
 ## Démarrage local
 
 Prérequis : [uv](https://docs.astral.sh/uv/) et Docker.
 
 ```bash
-make install     # crée le venv en Python 3.12 depuis pyproject.toml
-make hooks       # installe les hooks pre-commit
-make check       # ruff, mypy, pytest
+make install            # crée le venv en Python 3.12 depuis pyproject.toml
+make hooks              # installe les hooks pre-commit
+make check              # ruff, mypy, pytest
+make test-integration   # démarre Postgres et lance aussi les tests d'intégration
+make cycle              # un cycle en local contre Postgres dans Docker
+make up                 # un cycle dans le conteneur, comme le fera le Job
+make down               # arrête tout et supprime le volume
 ```
+
+Les tests d'intégration se skippent d'eux-mêmes si `TEST_DATABASE_URL` n'est pas
+défini, donc `make check` reste utilisable sans Docker.
 
 Copier `.env.example` vers `.env` pour les réglages locaux. `.env` est ignoré par
 git et par gitleaks. Sur Azure ces valeurs viennent de Key Vault via managed
@@ -144,6 +176,8 @@ commande, ce qui est une contrainte de conception, pas un confort. Un
 - [ADR-0002](docs/adr/0002-container-apps-over-aks.md) — Container Apps plutôt qu'AKS
 - [ADR-0003](docs/adr/0003-scheduled-job-over-long-running-process.md) — job planifié plutôt que processus permanent
 - [ADR-0004](docs/adr/0004-exchange-gateway-abstraction.md) — abstraction exchange et simulateur déterministe
+- [ADR-0005](docs/adr/0005-the-database-is-the-authoritative-ledger.md) — la base fait foi, pas la venue
+- [ADR-0006](docs/adr/0006-idempotent-cycles.md) — une bougie, un identifiant de cycle
 
 ## Licence
 
@@ -173,5 +207,5 @@ process outside sandbox mode, and the execution backend enum has no live member.
 This is enforced by unit tests and documented in
 [CLAUDE.md](CLAUDE.md).
 
-Build status: phase 1 of 6. See the progress table above for what actually
-exists today.
+Build status: phase 2 of 6 complete. See the progress table above for what
+actually exists today.
