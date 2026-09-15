@@ -59,7 +59,20 @@ The budget on the resource group alerts at 50, 80 and 100 percent. **A budget
 alerts, it does not stop anything.** The only control that actually caps spend
 is destroying the environment:
 
+    az monitor action-group delete -g rg-tradingbot-dev-neu -n "Application Insights Smart Detection"
     terraform destroy -var subscription_id=<SUBSCRIPTION_ID>
+
+The first line is not optional. Azure creates that action group by itself
+alongside Application Insights, Terraform does not know about it, and the
+provider runs with `prevent_deletion_if_contains_resources = true`. The destroy
+therefore removes all 35 resources and then refuses to delete the resource
+group, because from its point of view the group still contains something a human
+might have put there.
+
+Turning the guard off would make destroy a single command at the cost of
+silently deleting anything created outside Terraform in that group. Keeping it
+and deleting the one known artefact explicitly is the safer trade, and it is the
+reason this is written down rather than rediscovered during the next teardown.
 
 Stopping the database instead keeps the data and drops the compute charge for up
 to seven days:
