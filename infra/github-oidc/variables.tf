@@ -20,6 +20,18 @@ variable "github_repository" {
   default     = "azure-trading-platform"
 }
 
+variable "github_owner_id" {
+  description = "Numeric id of the GitHub account. Part of the immutable OIDC subject; read it with `gh api users/OWNER --jq .id`."
+  type        = number
+  default     = 100379191
+}
+
+variable "github_repository_id" {
+  description = "Numeric id of the repository. Part of the immutable OIDC subject; read it with `gh api repos/OWNER/REPO --jq .id`."
+  type        = number
+  default     = 1371256764
+}
+
 variable "github_environment" {
   description = "GitHub environment that gates deployments. Its protection rules are what make the deploy identity unreachable without an approval."
   type        = string

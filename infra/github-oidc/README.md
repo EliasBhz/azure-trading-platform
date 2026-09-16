@@ -99,7 +99,9 @@ No modules.
 | <a name="input_application_prefix"></a> [application\_prefix](#input\_application\_prefix) | Prefix for the two Entra ID application display names. | `string` | `"github-actions-tradingbot"` | no |
 | <a name="input_github_environment"></a> [github\_environment](#input\_github\_environment) | GitHub environment that gates deployments. Its protection rules are what make the deploy identity unreachable without an approval. | `string` | `"dev"` | no |
 | <a name="input_github_owner"></a> [github\_owner](#input\_github\_owner) | GitHub account or organisation owning the repository. | `string` | `"EliasBhz"` | no |
+| <a name="input_github_owner_id"></a> [github\_owner\_id](#input\_github\_owner\_id) | Numeric id of the GitHub account. Part of the immutable OIDC subject; read it with `gh api users/OWNER --jq .id`. | `number` | `100379191` | no |
 | <a name="input_github_repository"></a> [github\_repository](#input\_github\_repository) | Repository whose workflows may obtain these credentials. | `string` | `"azure-trading-platform"` | no |
+| <a name="input_github_repository_id"></a> [github\_repository\_id](#input\_github\_repository\_id) | Numeric id of the repository. Part of the immutable OIDC subject; read it with `gh api repos/OWNER/REPO --jq .id`. | `number` | `1371256764` | no |
 | <a name="input_state_resource_group_name"></a> [state\_resource\_group\_name](#input\_state\_resource\_group\_name) | Resource group holding the Terraform state storage account, created by infra/bootstrap. | `string` | `"rg-tfstate-tradingbot-neu"` | no |
 | <a name="input_state_storage_account_name"></a> [state\_storage\_account\_name](#input\_state\_storage\_account\_name) | Terraform state storage account, created by infra/bootstrap. | `string` | `"sttfstatetrading4vqxmldp"` | no |
 | <a name="input_subscription_id"></a> [subscription\_id](#input\_subscription\_id) | Azure subscription the identities are granted access to. | `string` | n/a | yes |

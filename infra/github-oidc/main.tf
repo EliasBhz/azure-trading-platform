@@ -10,7 +10,16 @@ data "azurerm_storage_account" "state" {
 }
 
 locals {
-  subject_prefix = "repo:${var.github_owner}/${var.github_repository}"
+  # GitHub issues immutable subject claims for this repository: the owner and
+  # the repository are identified by their numeric ids rather than their names.
+  # That is stronger than the name-based form, because a renamed account or a
+  # freed username re-registered by someone else cannot inherit the trust. It is
+  # also what the token actually carries, so the federated credential has to
+  # match it exactly.
+  #
+  # Which form applies is readable from:
+  #   gh api repos/OWNER/REPO/actions/oidc/customization/sub
+  subject_prefix = "repo:${var.github_owner}@${var.github_owner_id}/${var.github_repository}@${var.github_repository_id}"
 }
 
 # Two identities, not one. A pull request from a fork can run workflows, so the
@@ -45,6 +54,8 @@ resource "azuread_application_federated_identity_credential" "plan_pull_request"
   audiences      = ["api://AzureADTokenExchange"]
   issuer         = "https://token.actions.githubusercontent.com"
   subject        = "${local.subject_prefix}:pull_request"
+
+  # checkov:skip=CKV_AZURE_249:False positive on an immutable subject claim. The rule matches the name-based form `repo:owner/repo:...` and does not recognise `repo:owner@id/repo@id:...`. The subject here is fully qualified, contains no wildcard, and is strictly more restrictive than the form the rule accepts, because numeric ids cannot be reassigned to a different account.
 }
 
 resource "azurerm_role_assignment" "plan_reader" {
@@ -91,6 +102,8 @@ resource "azuread_application_federated_identity_credential" "deploy_environment
   audiences      = ["api://AzureADTokenExchange"]
   issuer         = "https://token.actions.githubusercontent.com"
   subject        = "${local.subject_prefix}:environment:${var.github_environment}"
+
+  # checkov:skip=CKV_AZURE_249:False positive on an immutable subject claim. The rule matches the name-based form `repo:owner/repo:...` and does not recognise `repo:owner@id/repo@id:...`. The subject here is fully qualified, contains no wildcard, and is strictly more restrictive than the form the rule accepts, because numeric ids cannot be reassigned to a different account.
 }
 
 resource "azurerm_role_assignment" "deploy_contributor" {
