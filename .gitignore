@@ -19,7 +19,8 @@ htmlcov/
 
 # Terraform
 .terraform/
-.terraform.lock.hcl
+# .terraform.lock.hcl is deliberately NOT ignored: it pins provider versions
+# and their checksums, which is a supply-chain control, not a local artefact.
 *.tfstate
 *.tfstate.*
 *.tfvars

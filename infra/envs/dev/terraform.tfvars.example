@@ -1,0 +1,7 @@
+# Copy to terraform.tfvars and fill in. terraform.tfvars is gitignored.
+subscription_id = "00000000-0000-0000-0000-000000000000"
+
+# Everything else has a default. Override only what you mean to change.
+# monthly_budget_amount = 15
+# cron_expression       = "*/15 * * * *"
+# image_tag             = "bootstrap"

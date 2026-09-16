@@ -48,8 +48,18 @@ repos:
       - id: terraform_tflint
       - id: terraform_docs
         args: [--args=--lockfile=false]
-      - id: terraform_checkov
-        args: [--args=--quiet, --args=--compact]
+
+  # checkov runs through uvx rather than the upstream hook, which expects a
+  # globally installed binary. Same reasoning as the mypy hook: the local and CI
+  # verdicts must come from the same invocation.
+  - repo: local
+    hooks:
+      - id: checkov
+        name: checkov
+        entry: uvx --from checkov checkov --directory infra --framework terraform --compact --quiet
+        language: system
+        files: \.tf$
+        pass_filenames: false
 
   - repo: https://github.com/compilerla/conventional-pre-commit
     rev: v4.0.0
