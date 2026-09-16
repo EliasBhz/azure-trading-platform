@@ -101,12 +101,19 @@ market data -> signal -> policy engine -> execution -> persistence
 
 ## Commands
 
-    make install      # sync the virtualenv from pyproject
-    make lint         # ruff check + ruff format --check
-    make typecheck    # mypy
-    make test         # pytest with coverage
-    make check        # all of the above
-    make up           # docker compose: postgres + bot
-    make down
+    make install           # sync the virtualenv from pyproject
+    make lint              # ruff check + ruff format --check
+    make typecheck         # mypy
+    make test              # pytest with coverage
+    make check             # all of the above
+    make test-integration  # start PostgreSQL, then run every test
+    make cycle             # one cycle locally against PostgreSQL in Docker
+    make up                # one cycle in the container, as the Job will run it
+    make down              # stop everything and drop the volume
 
 Local Python is managed by `uv` and pinned to 3.12 to match the container image.
+Integration tests skip themselves unless `TEST_DATABASE_URL` is set, so `make
+check` works without Docker.
+
+The local PostgreSQL is published on host port 5433. 5432 and the 55392-55491
+range are unavailable on the development machine.
