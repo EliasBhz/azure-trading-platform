@@ -1,0 +1,212 @@
+name: ci
+
+on:
+  pull_request:
+    branches: [main]
+
+# Nothing in this workflow may change anything. The token it can obtain is
+# read-only by construction: its federated credential subject is
+# `pull_request`, and the identity behind it holds Reader on the subscription
+# and Storage Blob Data Reader on the state.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: lint, types and tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: trading
+          POSTGRES_PASSWORD: trading
+          POSTGRES_DB: trading
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U trading -d trading"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # Without this the integration suite skips itself. Running the full suite
+      # against a real PostgreSQL is the point: it is what verifies the Alembic
+      # migrations rather than the models against themselves.
+      TEST_DATABASE_URL: postgresql+psycopg://trading:trading@localhost:5432/trading
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install
+        run: uv sync --all-extras --frozen
+
+      - name: Lint
+        run: |
+          uv run ruff check --output-format=github .
+          uv run ruff format --check .
+
+      - name: Types
+        run: uv run mypy
+
+      - name: Tests
+        run: uv run pytest --cov-report=term --cov-report=xml
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          uv run python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          report = Path("coverage.xml")
+          if not report.exists():
+              print("No coverage report was produced.")
+              raise SystemExit(0)
+          root = ET.parse(report).getroot()
+          rate = float(root.get("line-rate", 0)) * 100
+          branch = float(root.get("branch-rate", 0)) * 100
+          print("## Coverage\n")
+          print(f"- lines: {rate:.1f}%")
+          print(f"- branches: {branch:.1f}%")
+          PY
+
+  image:
+    name: build and scan the image
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: docker build -t trading-bot:${{ github.sha }} .
+
+      # Scanning before the image can reach a registry is the point. A scan that
+      # runs after the push reports on something already deployable.
+      - name: Scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: trading-bot:${{ github.sha }}
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+          vuln-type: os,library
+
+  terraform:
+    name: terraform checks and plan
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      # Required to obtain the OIDC token, and to write the plan comment.
+      id-token: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.2
+          terraform_wrapper: false
+
+      - name: Format
+        run: terraform fmt -check -recursive infra
+
+      - uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.64.0
+
+      - name: tflint
+        run: tflint --recursive --chdir=infra
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: checkov
+        run: uvx --from checkov checkov --directory infra --framework terraform --compact --quiet
+
+      # A pull request from a fork gets no OIDC token, so the plan is skipped
+      # rather than failed: a contributor should not see a red check for a
+      # permission GitHub deliberately withholds.
+      - name: Azure login
+        id: login
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID_PLAN }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Plan
+        id: plan
+        if: steps.login.outcome == 'success'
+        working-directory: infra/envs/dev
+        env:
+          ARM_USE_AZUREAD: "true"
+          ARM_USE_OIDC: "true"
+          ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID_PLAN }}
+          ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          terraform init -input=false
+          # -lock=false because this identity cannot write to the state account.
+          # Acquiring a blob lease is a write, and an identity that cannot write
+          # is an identity that cannot corrupt the state.
+          terraform plan -input=false -lock=false -no-color \
+            -var subscription_id="${ARM_SUBSCRIPTION_ID}" \
+            -out=tfplan | tee plan.txt
+          terraform show -no-color tfplan > plan.txt
+
+      - name: Comment the plan
+        if: steps.plan.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('infra/envs/dev/plan.txt', 'utf8');
+            const limit = 60000;
+            const body = [
+              '## Terraform plan — `infra/envs/dev`',
+              '',
+              '```terraform',
+              plan.length > limit ? plan.slice(0, limit) + '\n... truncated ...' : plan,
+              '```',
+            ].join('\n');
+
+            const marker = '## Terraform plan — `infra/envs/dev`';
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(
+              (c) => c.user.type === 'Bot' && c.body.startsWith(marker),
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }

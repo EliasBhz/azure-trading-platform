@@ -1,0 +1,144 @@
+name: cd
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Two deployments running at once would race on the Terraform state lock and on
+# the job revisions. Queued rather than cancelled: cancelling mid-apply leaves
+# the state locked.
+concurrency:
+  group: cd-dev
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: deploy to dev
+    runs-on: ubuntu-latest
+
+    # The whole job sits behind this environment, including the image build.
+    # The deployment identity's federated credential subject is
+    # `environment:dev`, so GitHub does not mint a usable token until a reviewer
+    # approves. The approval gate is therefore a security control and not a
+    # convention.
+    environment: dev
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.2
+          terraform_wrapper: false
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID_DEPLOY }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform init
+        working-directory: infra/envs/dev
+        env:
+          ARM_USE_AZUREAD: "true"
+          ARM_USE_OIDC: "true"
+          ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID_DEPLOY }}
+          ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+        run: terraform init -input=false
+
+      # First pass without the jobs. Azure validates the image manifest when a
+      # Container Apps Job is created, and the registry this stack creates is
+      # empty on a first deployment. Splitting the apply is what makes a
+      # from-scratch deployment work unattended. See ADR-0009.
+      - name: Apply the platform
+        working-directory: infra/envs/dev
+        env:
+          ARM_USE_AZUREAD: "true"
+          ARM_USE_OIDC: "true"
+          ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID_DEPLOY }}
+          ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          terraform apply -input=false -auto-approve \
+            -var subscription_id="${ARM_SUBSCRIPTION_ID}" \
+            -var jobs_enabled=false \
+            -var acr_push_principal_ids='{"cicd":"${{ vars.AZURE_DEPLOY_PRINCIPAL_ID }}"}'
+
+      - name: Read the registry
+        id: registry
+        working-directory: infra/envs/dev
+        run: |
+          echo "name=$(terraform output -raw registry_name)" >> "$GITHUB_OUTPUT"
+          echo "server=$(terraform output -raw registry_login_server)" >> "$GITHUB_OUTPUT"
+          echo "resource_group=$(terraform output -raw resource_group_name)" >> "$GITHUB_OUTPUT"
+
+      # Tagged with the commit SHA, never with a moving tag. A deployed
+      # revision has to name exactly one build, otherwise "what is running" has
+      # no answer.
+      - name: Build and push
+        env:
+          IMAGE: ${{ steps.registry.outputs.server }}/trading-bot:${{ github.sha }}
+        run: |
+          az acr login --name "${{ steps.registry.outputs.name }}"
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
+
+      - name: Apply the jobs
+        working-directory: infra/envs/dev
+        env:
+          ARM_USE_AZUREAD: "true"
+          ARM_USE_OIDC: "true"
+          ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID_DEPLOY }}
+          ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          terraform apply -input=false -auto-approve \
+            -var subscription_id="${ARM_SUBSCRIPTION_ID}" \
+            -var jobs_enabled=true \
+            -var image_tag="${{ github.sha }}" \
+            -var acr_push_principal_ids='{"cicd":"${{ vars.AZURE_DEPLOY_PRINCIPAL_ID }}"}'
+
+      # The database has no public endpoint, so this is the only place
+      # migrations can run from. See ADR-0009.
+      - name: Migrate
+        working-directory: infra/envs/dev
+        run: |
+          set -euo pipefail
+          RG="${{ steps.registry.outputs.resource_group }}"
+          JOB="$(terraform output -raw migrate_job_name)"
+          EXEC="$(az containerapp job start -n "$JOB" -g "$RG" --query name -o tsv)"
+          echo "execution: $EXEC"
+          "${GITHUB_WORKSPACE}/.github/scripts/wait-for-job.sh" "$JOB" "$RG" "$EXEC"
+
+      # A deployment that ends at "the apply succeeded" has verified that Azure
+      # accepted a manifest, not that the bot works. One real cycle is the
+      # smallest honest proof.
+      - name: Smoke test
+        working-directory: infra/envs/dev
+        run: |
+          set -euo pipefail
+          RG="${{ steps.registry.outputs.resource_group }}"
+          JOB="$(terraform output -raw trading_cycle_job_name)"
+          EXEC="$(az containerapp job start -n "$JOB" -g "$RG" --query name -o tsv)"
+          echo "execution: $EXEC"
+          "${GITHUB_WORKSPACE}/.github/scripts/wait-for-job.sh" "$JOB" "$RG" "$EXEC"
+
+      - name: Summary
+        if: always()
+        working-directory: infra/envs/dev
+        run: |
+          {
+            echo "## Deployed"
+            echo
+            echo "- image: \`${{ steps.registry.outputs.server }}/trading-bot:${{ github.sha }}\`"
+            echo "- resource group: \`${{ steps.registry.outputs.resource_group }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
