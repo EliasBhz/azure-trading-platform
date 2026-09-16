@@ -10,10 +10,10 @@ output "environment_default_domain" {
 
 output "trading_cycle_job_name" {
   description = "Scheduled job running one trading cycle."
-  value       = azurerm_container_app_job.trading_cycle.name
+  value       = one(azurerm_container_app_job.trading_cycle[*].name)
 }
 
 output "migrate_job_name" {
   description = "Manually triggered job running Alembic migrations."
-  value       = azurerm_container_app_job.migrate.name
+  value       = one(azurerm_container_app_job.migrate[*].name)
 }

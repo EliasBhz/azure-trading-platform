@@ -90,3 +90,9 @@ variable "workload_profile_name" {
   type        = string
   default     = "Consumption"
 }
+
+variable "jobs_enabled" {
+  description = "Create the jobs. Off for the first apply against an empty registry, because Azure validates the image manifest at job creation."
+  type        = bool
+  default     = true
+}

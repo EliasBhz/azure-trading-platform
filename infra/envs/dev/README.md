@@ -132,6 +132,7 @@ clearing it, which is drift that never converges.
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_acr_push_principal_ids"></a> [acr\_push\_principal\_ids](#input\_acr\_push\_principal\_ids) | Principals granted AcrPush on the registry, keyed by a readable name. The deployment identity, never the workload identity. | `map(string)` | `{}` | no |
 | <a name="input_budget_alert_thresholds"></a> [budget\_alert\_thresholds](#input\_budget\_alert\_thresholds) | Percentages of the budget that raise an alert. | `list(number)` | <pre>[<br/>  50,<br/>  80,<br/>  100<br/>]</pre> | no |
 | <a name="input_budget_end_date"></a> [budget\_end\_date](#input\_budget\_end\_date) | End of the budget period. | `string` | `"2030-01-01T00:00:00Z"` | no |
 | <a name="input_budget_start_date"></a> [budget\_start\_date](#input\_budget\_start\_date) | First day of the budget period. Azure requires the first of a month. | `string` | `"2026-09-01T00:00:00Z"` | no |
@@ -141,6 +142,7 @@ clearing it, which is drift that never converges.
 | <a name="input_exchange_backend"></a> [exchange\_backend](#input\_exchange\_backend) | simulated or ccxt\_sandbox. There is no third option. | `string` | `"simulated"` | no |
 | <a name="input_image_repository"></a> [image\_repository](#input\_image\_repository) | Repository holding the bot image inside the registry. | `string` | `"trading-bot"` | no |
 | <a name="input_image_tag"></a> [image\_tag](#input\_image\_tag) | Image tag the jobs run. CI replaces this with the commit SHA. | `string` | `"bootstrap"` | no |
+| <a name="input_jobs_enabled"></a> [jobs\_enabled](#input\_jobs\_enabled) | Create the Container Apps jobs. The deployment pipeline sets this to false on the apply that precedes pushing the image, because Azure validates the image manifest when a job is created. | `bool` | `true` | no |
 | <a name="input_location"></a> [location](#input\_location) | Azure region. | `string` | `"northeurope"` | no |
 | <a name="input_log_daily_quota_gb"></a> [log\_daily\_quota\_gb](#input\_log\_daily\_quota\_gb) | Hard daily ingestion cap on the workspace. | `number` | `1` | no |
 | <a name="input_log_level"></a> [log\_level](#input\_log\_level) | Bot log level. | `string` | `"INFO"` | no |

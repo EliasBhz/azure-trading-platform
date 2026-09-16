@@ -25,7 +25,7 @@ dans le dépôt, pas ce qui est prévu.
 | 1 | Scaffolding, CLAUDE.md, pre-commit, garde-fou sandbox | fait |
 | 2 | Bot en local, docker compose avec Postgres, tests | fait |
 | 3 | Bootstrap du state Terraform, infra dev | à faire |
-| 4 | CI/CD GitHub Actions avec OIDC | à faire |
+| 4 | CI/CD GitHub Actions avec OIDC | fait |
 | 5 | Observabilité, alertes, workbook, dashboard | à faire |
 | 6 | Documentation, ADR, runbook, nettoyage | à faire |
 
@@ -105,11 +105,13 @@ migrations/          Alembic
 tests/unit/          aucune dépendance externe
 tests/integration/   nécessite Postgres, marquées `integration`
 infra/bootstrap/     state distant Terraform, appliqué une seule fois
+infra/github-oidc/   identités OIDC de GitHub Actions, aucun secret
 infra/modules/       modules Terraform réutilisables
 infra/envs/dev/      composition de l'environnement dev
 docs/adr/            une ADR par décision structurante
 docs/runbook.md      procédures d'incident
-.github/             workflows CI/CD et Dependabot
+.github/workflows/   ci.yml sur PR, cd.yml sur main
+.github/scripts/     attente d'une exécution de Job Container Apps
 ```
 
 ### Modèle de données
@@ -178,6 +180,10 @@ commande, ce qui est une contrainte de conception, pas un confort. Un
 - [ADR-0004](docs/adr/0004-exchange-gateway-abstraction.md) — abstraction exchange et simulateur déterministe
 - [ADR-0005](docs/adr/0005-the-database-is-the-authoritative-ledger.md) — la base fait foi, pas la venue
 - [ADR-0006](docs/adr/0006-idempotent-cycles.md) — une bougie, un identifiant de cycle
+- [ADR-0007](docs/adr/0007-remote-state-without-storage-account-keys.md) — state distant sans clé de compte
+- [ADR-0008](docs/adr/0008-region-north-europe.md) — North Europe plutôt que West Europe
+- [ADR-0009](docs/adr/0009-private-database-and-in-vnet-migrations.md) — base privée, migrations dans le VNet
+- [ADR-0010](docs/adr/0010-github-oidc-with-two-identities.md) — OIDC GitHub avec deux identités séparées
 
 ## Licence
 
@@ -207,5 +213,5 @@ process outside sandbox mode, and the execution backend enum has no live member.
 This is enforced by unit tests and documented in
 [CLAUDE.md](CLAUDE.md).
 
-Build status: phase 2 of 6 complete. See the progress table above for what
+Build status: phase 4 of 6 complete. See the progress table above for what
 actually exists today.

@@ -56,3 +56,14 @@ resource "azurerm_role_assignment" "pull" {
   role_definition_name = "AcrPull"
   principal_id         = each.value
 }
+
+# Push is granted separately and to different principals than pull. The workload
+# identity must never be able to write to the registry it runs from: a
+# compromised job could otherwise replace its own image.
+resource "azurerm_role_assignment" "push" {
+  for_each = var.push_principal_ids
+
+  scope                = azurerm_container_registry.this.id
+  role_definition_name = "AcrPush"
+  principal_id         = each.value
+}

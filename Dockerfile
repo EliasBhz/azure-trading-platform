@@ -23,6 +23,14 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 FROM python:3.12-slim-bookworm AS runtime
 
+# Base images are rebuilt on their own schedule and lag behind Debian security
+# updates, so a freshly pulled tag can still carry vulnerabilities that upstream
+# has already fixed. The Trivy gate in CI is what makes that visible; this is
+# the answer to it.
+RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
 # The build tools and the uv binary stay in the builder stage: the runtime image
 # ships the virtualenv and nothing that could compile or fetch code.
 RUN groupadd --system --gid 1001 bot \

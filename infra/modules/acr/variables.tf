@@ -33,3 +33,9 @@ variable "tags" {
   description = "Tags applied to every resource."
   type        = map(string)
 }
+
+variable "push_principal_ids" {
+  description = "Principals granted AcrPush, keyed by a readable name. Normally only the deployment identity."
+  type        = map(string)
+  default     = {}
+}

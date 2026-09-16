@@ -90,6 +90,8 @@ module "acr" {
   pull_principal_ids = {
     workload = azurerm_user_assigned_identity.workload.principal_id
   }
+
+  push_principal_ids = var.acr_push_principal_ids
 }
 
 module "postgres" {
@@ -160,6 +162,7 @@ module "container_apps" {
   registry_server            = module.acr.login_server
   image                      = "${module.acr.login_server}/${var.image_repository}:${var.image_tag}"
   cron_expression            = var.cron_expression
+  jobs_enabled               = var.jobs_enabled
   tags                       = local.tags
 
   secrets = {
