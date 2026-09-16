@@ -117,7 +117,7 @@ jobs:
           JOB="$(terraform output -raw migrate_job_name)"
           EXEC="$(az containerapp job start -n "$JOB" -g "$RG" --query name -o tsv)"
           echo "execution: $EXEC"
-          "${GITHUB_WORKSPACE}/.github/scripts/wait-for-job.sh" "$JOB" "$RG" "$EXEC"
+          bash "${GITHUB_WORKSPACE}/.github/scripts/wait-for-job.sh" "$JOB" "$RG" "$EXEC"
 
       # A deployment that ends at "the apply succeeded" has verified that Azure
       # accepted a manifest, not that the bot works. One real cycle is the
@@ -130,7 +130,7 @@ jobs:
           JOB="$(terraform output -raw trading_cycle_job_name)"
           EXEC="$(az containerapp job start -n "$JOB" -g "$RG" --query name -o tsv)"
           echo "execution: $EXEC"
-          "${GITHUB_WORKSPACE}/.github/scripts/wait-for-job.sh" "$JOB" "$RG" "$EXEC"
+          bash "${GITHUB_WORKSPACE}/.github/scripts/wait-for-job.sh" "$JOB" "$RG" "$EXEC"
 
       - name: Summary
         if: always()
