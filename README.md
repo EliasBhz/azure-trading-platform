@@ -106,6 +106,7 @@ tests/unit/          aucune dépendance externe
 tests/integration/   nécessite Postgres, marquées `integration`
 infra/bootstrap/     state distant Terraform, appliqué une seule fois
 infra/github-oidc/   identités OIDC de GitHub Actions, aucun secret
+infra/governance/    budget d'abonnement et arrêt automatique sur dépassement
 infra/modules/       modules Terraform réutilisables
 infra/envs/dev/      composition de l'environnement dev
 docs/adr/            une ADR par décision structurante
@@ -166,11 +167,27 @@ les prix bougent et dépendent de la région.
 | Container Registry Basic | fixe et faible |
 | Key Vault, VNet, Private DNS | négligeable |
 
-L'abonnement est un essai gratuit de 200 USD sur 30 jours. La conséquence
-opérationnelle est que l'environnement doit pouvoir être détruit et recréé en une
-commande, ce qui est une contrainte de conception, pas un confort. Un
-`azurerm_consumption_budget_resource_group` déclenche des alertes à 50, 80 et
-100 %.
+L'abonnement est en Pay-As-You-Go, plafond de dépense désactivé. Rien ne limite
+ce qui peut être facturé, donc l'environnement doit pouvoir être détruit et
+recréé en une commande : c'est une contrainte de conception, pas un confort.
+
+Deux budgets, à deux portées différentes, parce qu'ils répondent à deux
+questions :
+
+| Portée | Montant | Rôle |
+|---|---|---|
+| Resource group dev | 15 € | cet environnement se comporte-t-il normalement |
+| Abonnement | 50 € | l'abonnement dans son ensemble dérive-t-il |
+
+Le budget au niveau resource group est **aveugle à une partie du coût** :
+Container Apps crée son propre groupe d'infrastructure `ME_<env>_<rg>_<région>`
+en dehors du nôtre. Seul le budget d'abonnement voit tout.
+
+**Un budget Azure alerte, il n'arrête rien.** À 100 % du budget d'abonnement, une
+automatisation arrête les serveurs PostgreSQL du projet — voir
+[infra/governance](infra/governance/README.md) et
+[ADR-0011](docs/adr/0011-budget-alerts-and-an-automated-stop.md), qui détaillent
+aussi ce que ce garde-fou ne couvre pas.
 
 ## Décisions d'architecture
 
