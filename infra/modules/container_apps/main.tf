@@ -58,7 +58,14 @@ locals {
   )
 }
 
+# Azure validates the image manifest when a job is created and answers
+# MANIFEST_UNKNOWN if the tag does not exist. The registry is created by this
+# same stack, so on an empty registry the jobs cannot exist yet. The deployment
+# pipeline applies once with this off to create the registry, pushes the image,
+# then applies again with it on.
 resource "azurerm_container_app_job" "trading_cycle" {
+  count = var.jobs_enabled ? 1 : 0
+
   name                         = "caj-${var.name_prefix}-cycle"
   resource_group_name          = var.resource_group_name
   location                     = var.location
@@ -128,6 +135,8 @@ resource "azurerm_container_app_job" "trading_cycle" {
 # deployment starts it explicitly and a failure is visible as a failed
 # execution rather than buried in a start-up log.
 resource "azurerm_container_app_job" "migrate" {
+  count = var.jobs_enabled ? 1 : 0
+
   name                         = "caj-${var.name_prefix}-migrate"
   resource_group_name          = var.resource_group_name
   location                     = var.location

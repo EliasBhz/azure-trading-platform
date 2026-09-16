@@ -128,3 +128,15 @@ variable "budget_end_date" {
   type        = string
   default     = "2030-01-01T00:00:00Z"
 }
+
+variable "jobs_enabled" {
+  description = "Create the Container Apps jobs. The deployment pipeline sets this to false on the apply that precedes pushing the image, because Azure validates the image manifest when a job is created."
+  type        = bool
+  default     = true
+}
+
+variable "acr_push_principal_ids" {
+  description = "Principals granted AcrPush on the registry, keyed by a readable name. The deployment identity, never the workload identity."
+  type        = map(string)
+  default     = {}
+}

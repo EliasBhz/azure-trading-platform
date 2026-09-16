@@ -37,6 +37,7 @@ No modules.
 | <a name="input_environment_variables"></a> [environment\_variables](#input\_environment\_variables) | Plain environment variables passed to every job. | `map(string)` | `{}` | no |
 | <a name="input_image"></a> [image](#input\_image) | Fully qualified image reference, including the tag. | `string` | n/a | yes |
 | <a name="input_infrastructure_subnet_id"></a> [infrastructure\_subnet\_id](#input\_infrastructure\_subnet\_id) | Subnet the environment is injected into. Must be /23 or larger. | `string` | n/a | yes |
+| <a name="input_jobs_enabled"></a> [jobs\_enabled](#input\_jobs\_enabled) | Create the jobs. Off for the first apply against an empty registry, because Azure validates the image manifest at job creation. | `bool` | `true` | no |
 | <a name="input_location"></a> [location](#input\_location) | Azure region. | `string` | n/a | yes |
 | <a name="input_log_analytics_workspace_id"></a> [log\_analytics\_workspace\_id](#input\_log\_analytics\_workspace\_id) | Workspace receiving container stdout. | `string` | n/a | yes |
 | <a name="input_memory"></a> [memory](#input\_memory) | Memory per replica. Must pair with cpu at a 1 to 2 ratio. | `string` | `"0.5Gi"` | no |

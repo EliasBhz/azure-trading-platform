@@ -27,6 +27,7 @@ No modules.
 | [azurerm_container_registry.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/container_registry) | resource |
 | [azurerm_monitor_diagnostic_setting.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_diagnostic_setting) | resource |
 | [azurerm_role_assignment.pull](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
+| [azurerm_role_assignment.push](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
 
 ## Inputs
 
@@ -36,6 +37,7 @@ No modules.
 | <a name="input_log_analytics_workspace_id"></a> [log\_analytics\_workspace\_id](#input\_log\_analytics\_workspace\_id) | Workspace receiving the registry logs. | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | Registry name. Globally unique, lowercase alphanumeric only. | `string` | n/a | yes |
 | <a name="input_pull_principal_ids"></a> [pull\_principal\_ids](#input\_pull\_principal\_ids) | Principals granted AcrPull, keyed by a readable name. | `map(string)` | `{}` | no |
+| <a name="input_push_principal_ids"></a> [push\_principal\_ids](#input\_push\_principal\_ids) | Principals granted AcrPush, keyed by a readable name. Normally only the deployment identity. | `map(string)` | `{}` | no |
 | <a name="input_resource_group_name"></a> [resource\_group\_name](#input\_resource\_group\_name) | Resource group that holds the registry. | `string` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags applied to every resource. | `map(string)` | n/a | yes |
 
