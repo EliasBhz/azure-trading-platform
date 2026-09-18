@@ -29,11 +29,15 @@ resource "azuread_application" "dashboard" {
     redirect_uris = [local.dashboard_redirect_uri]
 
     implicit_grant {
-      # The authorization code flow is used, so neither implicit grant is
-      # needed. Leaving them on is how an application ends up handing tokens to
-      # a browser that was never meant to hold one.
+      # Access token issuance stays off: the dashboard calls no API, so an
+      # access token in a browser would be a credential with nothing to open.
       access_token_issuance_enabled = false
-      id_token_issuance_enabled     = false
+
+      # ID token issuance has to be on. Easy Auth asks Entra ID for
+      # `response_type=code+id_token`, the hybrid flow, and without this the
+      # authorize request is rejected. This was found by reading the redirect
+      # the platform actually issues rather than by assuming the plain code flow.
+      id_token_issuance_enabled = true
     }
   }
 
@@ -88,9 +92,16 @@ resource "azurerm_key_vault_secret" "dashboard_client_secret" {
 resource "azapi_resource" "dashboard_auth" {
   count = var.dashboard_enabled ? 1 : 0
 
-  type      = "Microsoft.App/containerApps/authConfigs@2024-03-01"
+  # The identity-based token store needs a recent API version; older ones only
+  # accept a shared access signature.
+  type      = "Microsoft.App/containerApps/authConfigs@2025-01-01"
   name      = "current"
   parent_id = azurerm_container_app.dashboard[0].id
+
+  # The provider's bundled schema still requires a shared access signature for
+  # the token store. The service accepts an identity instead, so the local
+  # check is turned off and the API is left to validate the payload.
+  schema_validation_enabled = false
 
   body = {
     properties = {
@@ -119,27 +130,41 @@ resource "azapi_resource" "dashboard_auth" {
             openIdIssuer            = "https://sts.windows.net/${var.tenant_id}/v2.0"
           }
 
-          validation = {
-            # Without an explicit audience the platform accepts any token this
-            # tenant issued, including one minted for a different application.
-            allowedAudiences = ["api://${azuread_application.dashboard[0].client_id}"]
-
-            defaultAuthorizationPolicy = {
-              allowedPrincipals = {
-                identities = var.dashboard_allowed_principal_ids
+          # An authorisation policy is sent only when there is something to put
+          # in it. An empty allowed-principals list is not "everyone": it is an
+          # allow-list naming nobody, and the platform answers 401 rather than
+          # offering a sign-in that could never succeed.
+          validation = merge(
+            {
+              # Without an explicit audience the platform accepts any token this
+              # tenant issued, including one minted for a different application.
+              allowedAudiences = ["api://${azuread_application.dashboard[0].client_id}"]
+            },
+            length(var.dashboard_allowed_principal_ids) > 0 ? {
+              defaultAuthorizationPolicy = {
+                allowedPrincipals = {
+                  identities = var.dashboard_allowed_principal_ids
+                }
               }
-            }
-          }
+            } : {},
+          )
         }
       }
 
       login = {
+        # Required for the browser flow. Measured rather than assumed: with the
+        # token store off, the app stored RedirectToLoginPage and still answered
+        # 401 with a bearer challenge, which protects the page and makes it
+        # unusable in a browser.
         tokenStore = {
-          # Off deliberately. A token store needs a storage account and a SAS
-          # URL, which is a credential to rotate, and Azure rejects the config
-          # outright without one. The dashboard calls no downstream API: it only
-          # needs to know a sign-in happened, so it holds no token worth storing.
-          enabled = false
+          enabled = true
+
+          azureBlobStorage = {
+            # Addressed by URI with a managed identity, so no storage key and no
+            # shared access signature exists to rotate or leak.
+            blobContainerUri          = "https://${azurerm_storage_account.token_store[0].name}.blob.core.windows.net/${azurerm_storage_container.token_store[0].name}"
+            managedIdentityResourceId = var.user_assigned_identity_id
+          }
         }
       }
     }

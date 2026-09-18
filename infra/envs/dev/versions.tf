@@ -42,6 +42,11 @@ provider "azapi" {}
 provider "azurerm" {
   subscription_id = var.subscription_id
 
+  # Reach the blob and queue data planes with the caller's Entra ID identity.
+  # Without this the provider reads storage properties with a shared key, which
+  # fails outright on an account that has key based authentication disabled.
+  storage_use_azuread = true
+
   features {
     key_vault {
       # Do not recover a soft-deleted vault silently. Purge protection is off so

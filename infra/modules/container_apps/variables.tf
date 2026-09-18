@@ -129,3 +129,13 @@ variable "client_secret_end_date" {
   type        = string
   default     = "2027-09-01T00:00:00Z"
 }
+
+variable "user_assigned_identity_principal_id" {
+  description = "Principal id of the workload identity, needed to grant it access to the token store."
+  type        = string
+}
+
+variable "token_store_account_name" {
+  description = "Storage account holding dashboard session tokens. Globally unique, lowercase alphanumeric."
+  type        = string
+}

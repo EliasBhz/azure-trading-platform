@@ -168,6 +168,9 @@ module "container_apps" {
   tenant_id                  = data.azurerm_client_config.current.tenant_id
   deployer_object_id         = data.azurerm_client_config.current.object_id
 
+  user_assigned_identity_principal_id = azurerm_user_assigned_identity.workload.principal_id
+  token_store_account_name            = "sttok${replace(local.name_prefix, "-", "")}${random_string.suffix.result}"
+
   dashboard_allowed_principal_ids = var.dashboard_allowed_principal_ids
   tags                            = local.tags
 

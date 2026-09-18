@@ -11,6 +11,7 @@ Consumption-only Container Apps environment, the cron-scheduled trading cycle jo
 | <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) | ~> 2.0 |
 | <a name="requirement_azuread"></a> [azuread](#requirement\_azuread) | ~> 3.0 |
 | <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) | ~> 4.0 |
+| <a name="requirement_time"></a> [time](#requirement\_time) | ~> 0.12 |
 
 ## Providers
 
@@ -19,6 +20,7 @@ Consumption-only Container Apps environment, the cron-scheduled trading cycle jo
 | <a name="provider_azapi"></a> [azapi](#provider\_azapi) | ~> 2.0 |
 | <a name="provider_azuread"></a> [azuread](#provider\_azuread) | ~> 3.0 |
 | <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) | ~> 4.0 |
+| <a name="provider_time"></a> [time](#provider\_time) | ~> 0.12 |
 
 ## Modules
 
@@ -37,6 +39,11 @@ No modules.
 | [azurerm_container_app_job.migrate](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/container_app_job) | resource |
 | [azurerm_container_app_job.trading_cycle](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/container_app_job) | resource |
 | [azurerm_key_vault_secret.dashboard_client_secret](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/key_vault_secret) | resource |
+| [azurerm_role_assignment.token_store_deployer](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
+| [azurerm_role_assignment.token_store_workload](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
+| [azurerm_storage_account.token_store](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_account) | resource |
+| [azurerm_storage_container.token_store](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_container) | resource |
+| [time_sleep.token_store_rbac](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/sleep) | resource |
 
 ## Inputs
 
@@ -64,7 +71,9 @@ No modules.
 | <a name="input_secrets"></a> [secrets](#input\_secrets) | Job secrets, secret name to Key Vault versionless secret id. | `map(string)` | `{}` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags applied to every resource. | `map(string)` | n/a | yes |
 | <a name="input_tenant_id"></a> [tenant\_id](#input\_tenant\_id) | Entra ID tenant issuing dashboard sign-in tokens. | `string` | n/a | yes |
+| <a name="input_token_store_account_name"></a> [token\_store\_account\_name](#input\_token\_store\_account\_name) | Storage account holding dashboard session tokens. Globally unique, lowercase alphanumeric. | `string` | n/a | yes |
 | <a name="input_user_assigned_identity_id"></a> [user\_assigned\_identity\_id](#input\_user\_assigned\_identity\_id) | Identity used to pull from the registry and to read Key Vault secrets. | `string` | n/a | yes |
+| <a name="input_user_assigned_identity_principal_id"></a> [user\_assigned\_identity\_principal\_id](#input\_user\_assigned\_identity\_principal\_id) | Principal id of the workload identity, needed to grant it access to the token store. | `string` | n/a | yes |
 | <a name="input_workload_profile_name"></a> [workload\_profile\_name](#input\_workload\_profile\_name) | Workload profile the jobs run on. Consumption is what a Consumption-only environment assigns. | `string` | `"Consumption"` | no |
 
 ## Outputs
