@@ -28,9 +28,9 @@ variable "log_analytics_workspace_id" {
   type        = string
 }
 
-variable "deployer_object_id" {
-  description = "Object id of the identity running Terraform. Needs Key Vault Secrets Officer to write secrets."
-  type        = string
+variable "secret_writer_principal_ids" {
+  description = "Every principal that may run apply, keyed by a readable name. All get Key Vault Secrets Officer, so a plan run by one does not propose removing another."
+  type        = map(string)
 }
 
 variable "secret_reader_principal_ids" {

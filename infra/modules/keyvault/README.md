@@ -29,20 +29,20 @@ No modules.
 | [azurerm_key_vault.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/key_vault) | resource |
 | [azurerm_key_vault_secret.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/key_vault_secret) | resource |
 | [azurerm_monitor_diagnostic_setting.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_diagnostic_setting) | resource |
-| [azurerm_role_assignment.deployer_secrets_officer](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
 | [azurerm_role_assignment.reader_secrets_user](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
+| [azurerm_role_assignment.secrets_officer](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
 | [time_sleep.rbac_propagation](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/sleep) | resource |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
-| <a name="input_deployer_object_id"></a> [deployer\_object\_id](#input\_deployer\_object\_id) | Object id of the identity running Terraform. Needs Key Vault Secrets Officer to write secrets. | `string` | n/a | yes |
 | <a name="input_location"></a> [location](#input\_location) | Azure region. | `string` | n/a | yes |
 | <a name="input_log_analytics_workspace_id"></a> [log\_analytics\_workspace\_id](#input\_log\_analytics\_workspace\_id) | Workspace receiving the vault audit log. | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | Key Vault name. Globally unique, 3 to 24 characters. | `string` | n/a | yes |
 | <a name="input_resource_group_name"></a> [resource\_group\_name](#input\_resource\_group\_name) | Resource group that holds the vault. | `string` | n/a | yes |
 | <a name="input_secret_reader_principal_ids"></a> [secret\_reader\_principal\_ids](#input\_secret\_reader\_principal\_ids) | Principals granted Key Vault Secrets User, keyed by a readable name. | `map(string)` | `{}` | no |
+| <a name="input_secret_writer_principal_ids"></a> [secret\_writer\_principal\_ids](#input\_secret\_writer\_principal\_ids) | Every principal that may run apply, keyed by a readable name. All get Key Vault Secrets Officer, so a plan run by one does not propose removing another. | `map(string)` | n/a | yes |
 | <a name="input_secrets"></a> [secrets](#input\_secrets) | Secrets to create, name to value. | `map(string)` | `{}` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags applied to every resource. | `map(string)` | n/a | yes |
 | <a name="input_tenant_id"></a> [tenant\_id](#input\_tenant\_id) | Entra ID tenant that owns the vault. | `string` | n/a | yes |

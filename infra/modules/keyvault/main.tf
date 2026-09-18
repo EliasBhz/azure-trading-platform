@@ -82,12 +82,19 @@ resource "azurerm_key_vault_secret" "this" {
 }
 
 # Writing a secret is a data action. Owner on the subscription does not grant
-# it, so the deploying identity needs this role explicitly, and it has to exist
-# before the first secret is written.
-resource "azurerm_role_assignment" "deployer_secrets_officer" {
+# it, so every identity that may run apply needs this role explicitly, and it
+# has to exist before the first secret is written.
+#
+# A set rather than "whoever is running apply". Deriving it from the caller made
+# a human plan propose deleting the pipeline's permission, and a pipeline plan
+# propose deleting the human's: two identities fighting over one resource, with
+# the loser finding out at the next apply.
+resource "azurerm_role_assignment" "secrets_officer" {
+  for_each = var.secret_writer_principal_ids
+
   scope                = azurerm_key_vault.this.id
   role_definition_name = "Key Vault Secrets Officer"
-  principal_id         = var.deployer_object_id
+  principal_id         = each.value
 }
 
 resource "azurerm_role_assignment" "reader_secrets_user" {
@@ -102,6 +109,6 @@ resource "azurerm_role_assignment" "reader_secrets_user" {
 # after granting the role fails intermittently, and an intermittent failure in a
 # deployment pipeline is worse than a fixed minute of waiting.
 resource "time_sleep" "rbac_propagation" {
-  depends_on      = [azurerm_role_assignment.deployer_secrets_officer]
+  depends_on      = [azurerm_role_assignment.secrets_officer]
   create_duration = "60s"
 }
