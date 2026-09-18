@@ -135,8 +135,36 @@ variable "jobs_enabled" {
   default     = true
 }
 
+# The deployment service principal's object id, created by infra/github-oidc.
+# It is a default rather than something the pipeline passes, so that a plan run
+# by a human proposes exactly what the pipeline would. An object id is an
+# identifier, not a credential.
 variable "acr_push_principal_ids" {
   description = "Principals granted AcrPush on the registry, keyed by a readable name. The deployment identity, never the workload identity."
   type        = map(string)
-  default     = {}
+  default     = { cicd = "76975942-91f3-467b-9b18-9fbf5eb3208e" }
+}
+
+variable "secret_writer_principal_ids" {
+  description = "Identities besides the caller that may write Key Vault secrets. The pipeline is listed so a local plan does not propose removing its access."
+  type        = map(string)
+  default     = { cicd = "76975942-91f3-467b-9b18-9fbf5eb3208e" }
+}
+
+variable "alert_contact_emails" {
+  description = "Addresses notified by the alerts. Empty by default so no address is committed to a public repository."
+  type        = list(string)
+  default     = []
+}
+
+variable "drawdown_alert_ratio" {
+  description = "Intraday drawdown that raises an alert, as a fraction of the day's opening equity."
+  type        = number
+  default     = 0.05
+}
+
+variable "no_cycle_window" {
+  description = "How long the bot may be silent before the alert fires. Must stay consistent with the cron schedule."
+  type        = string
+  default     = "PT45M"
 }

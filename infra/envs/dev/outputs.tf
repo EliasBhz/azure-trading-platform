@@ -47,3 +47,13 @@ output "image_reference" {
   description = "Image the jobs expect. Build and push this before running them."
   value       = "${module.acr.login_server}/${var.image_repository}:${var.image_tag}"
 }
+
+output "workbook_id" {
+  description = "Versioned Azure Workbook showing equity, drawdown, decisions and failures."
+  value       = module.alerts.workbook_id
+}
+
+output "alert_names" {
+  description = "Alert rules watching the bot."
+  value       = module.alerts.alert_names
+}
