@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
-from tests.integration.conftest import TIMEFRAME, StubExchange
+from tests.integration.conftest import TIMEFRAME, RecordingTelemetry, StubExchange
 from trading_bot.cycle import TradingCycle
 from trading_bot.domain.decisions import DecisionOutcome
 from trading_bot.persistence.models import (
@@ -53,12 +53,14 @@ def build_cycle(
     kill_switch: bool = False,
     limits: RiskLimits = LIMITS,
     initial_cash: Decimal = Decimal(10_000),
+    telemetry: RecordingTelemetry | None = None,
 ) -> TradingCycle:
     return TradingCycle(
         gateway=gateway,
         strategy=SmaCrossoverStrategy(fast_window=2, slow_window=4),
         policy=PolicyEngine(limits),
         kill_switch=StaticKillSwitch(kill_switch),
+        telemetry=telemetry,
         symbol=SYMBOL,
         timeframe=TIMEFRAME,
         candle_limit=50,
@@ -232,3 +234,35 @@ def test_the_daily_loss_limit_reads_the_first_snapshot_of_the_day(
     assert result.decision.outcome is DecisionOutcome.HOLD
     assert result.decision.reason == "daily loss limit reached"
     assert collapsed.submitted == []
+
+
+def test_a_cycle_records_the_metrics_a_dashboard_needs(
+    session_factory: sessionmaker[Session],
+) -> None:
+    """A metric nobody records fails silently and is only noticed when a
+    dashboard stays empty. This asserts the wiring, not the exporter."""
+    telemetry = RecordingTelemetry()
+    gateway = StubExchange(CROSS_UP, now=NOW)
+
+    with session_factory() as session:
+        result = build_cycle(gateway, telemetry=telemetry).run(session)
+        session.commit()
+
+    assert telemetry.decisions == [result.decision.outcome.value]
+    assert telemetry.order_latencies == ["buy"]
+    assert len(telemetry.cycle_durations) == 1
+    assert telemetry.equity == [(result.equity.equity_quote, result.equity.drawdown_ratio)]
+
+
+def test_a_hold_cycle_records_no_order_latency(
+    session_factory: sessionmaker[Session],
+) -> None:
+    telemetry = RecordingTelemetry()
+    gateway = StubExchange(FLAT, now=NOW)
+
+    with session_factory() as session:
+        build_cycle(gateway, telemetry=telemetry).run(session)
+        session.commit()
+
+    assert telemetry.order_latencies == []
+    assert telemetry.decisions == ["hold"]
