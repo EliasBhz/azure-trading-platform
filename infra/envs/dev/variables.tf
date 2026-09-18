@@ -129,6 +129,12 @@ variable "budget_end_date" {
   default     = "2030-01-01T00:00:00Z"
 }
 
+variable "dashboard_enabled" {
+  description = "Create the dashboard Container App. The deployment pipeline sets this to false on the apply that precedes pushing the image, for the same reason jobs_enabled exists."
+  type        = bool
+  default     = true
+}
+
 variable "jobs_enabled" {
   description = "Create the Container Apps jobs. The deployment pipeline sets this to false on the apply that precedes pushing the image, because Azure validates the image manifest when a job is created."
   type        = bool
@@ -174,4 +180,10 @@ variable "no_cycle_window" {
   description = "How long the bot may be silent before the alert fires. Must stay consistent with the cron schedule."
   type        = string
   default     = "PT45M"
+}
+
+variable "dashboard_allowed_principal_ids" {
+  description = "Object ids allowed to sign in to the dashboard. Empty means anyone in the tenant."
+  type        = list(string)
+  default     = []
 }

@@ -163,7 +163,16 @@ module "container_apps" {
   image                      = "${module.acr.login_server}/${var.image_repository}:${var.image_tag}"
   cron_expression            = var.cron_expression
   jobs_enabled               = var.jobs_enabled
-  tags                       = local.tags
+  dashboard_enabled          = var.dashboard_enabled
+  key_vault_id               = module.keyvault.id
+  tenant_id                  = data.azurerm_client_config.current.tenant_id
+  deployer_object_id         = data.azurerm_client_config.current.object_id
+
+  user_assigned_identity_principal_id = azurerm_user_assigned_identity.workload.principal_id
+  token_store_account_name            = "sttok${replace(local.name_prefix, "-", "")}${random_string.suffix.result}"
+
+  dashboard_allowed_principal_ids = var.dashboard_allowed_principal_ids
+  tags                            = local.tags
 
   secrets = {
     "database-url"                  = module.keyvault.secret_versionless_ids["database-url"]

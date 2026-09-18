@@ -95,6 +95,8 @@ clearing it, which is drift that never converges.
 | Name | Version |
 | ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9.0 |
+| <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) | ~> 2.0 |
+| <a name="requirement_azuread"></a> [azuread](#requirement\_azuread) | ~> 3.0 |
 | <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) | ~> 4.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3.6 |
 | <a name="requirement_time"></a> [time](#requirement\_time) | ~> 0.12 |
@@ -140,6 +142,8 @@ clearing it, which is drift that never converges.
 | <a name="input_budget_start_date"></a> [budget\_start\_date](#input\_budget\_start\_date) | First day of the budget period. Azure requires the first of a month. | `string` | `"2026-09-01T00:00:00Z"` | no |
 | <a name="input_cost_center"></a> [cost\_center](#input\_cost\_center) | Value of the mandatory cost-center tag. | `string` | `"personal"` | no |
 | <a name="input_cron_expression"></a> [cron\_expression](#input\_cron\_expression) | Trading cycle schedule, in UTC. | `string` | `"*/15 * * * *"` | no |
+| <a name="input_dashboard_allowed_principal_ids"></a> [dashboard\_allowed\_principal\_ids](#input\_dashboard\_allowed\_principal\_ids) | Object ids allowed to sign in to the dashboard. Empty means anyone in the tenant. | `list(string)` | `[]` | no |
+| <a name="input_dashboard_enabled"></a> [dashboard\_enabled](#input\_dashboard\_enabled) | Create the dashboard Container App. The deployment pipeline sets this to false on the apply that precedes pushing the image, for the same reason jobs\_enabled exists. | `bool` | `true` | no |
 | <a name="input_drawdown_alert_ratio"></a> [drawdown\_alert\_ratio](#input\_drawdown\_alert\_ratio) | Intraday drawdown that raises an alert, as a fraction of the day's opening equity. | `number` | `0.05` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | Environment name, also used as the env tag. | `string` | `"dev"` | no |
 | <a name="input_exchange_backend"></a> [exchange\_backend](#input\_exchange\_backend) | simulated or ccxt\_sandbox. There is no third option. | `string` | `"simulated"` | no |
@@ -165,6 +169,8 @@ clearing it, which is drift that never converges.
 | Name | Description |
 | ---- | ----------- |
 | <a name="output_alert_names"></a> [alert\_names](#output\_alert\_names) | Alert rules watching the bot. |
+| <a name="output_dashboard_client_id"></a> [dashboard\_client\_id](#output\_dashboard\_client\_id) | Entra ID application users sign in to before reaching the dashboard. |
+| <a name="output_dashboard_url"></a> [dashboard\_url](#output\_dashboard\_url) | Dashboard address. Protected by Entra ID once Easy Auth is configured. |
 | <a name="output_image_reference"></a> [image\_reference](#output\_image\_reference) | Image the jobs expect. Build and push this before running them. |
 | <a name="output_key_vault_name"></a> [key\_vault\_name](#output\_key\_vault\_name) | Key Vault name. |
 | <a name="output_key_vault_uri"></a> [key\_vault\_uri](#output\_key\_vault\_uri) | Key Vault URI. |

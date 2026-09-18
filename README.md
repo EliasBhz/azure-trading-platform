@@ -27,7 +27,7 @@ dans le dépôt, pas ce qui est prévu.
 | 3 | Bootstrap du state Terraform, infra dev | fait |
 | 4 | CI/CD GitHub Actions avec OIDC | fait |
 | 5 | Observabilité, alertes, workbook | fait |
-| 6 | Dashboard, documentation, runbook, nettoyage | à faire |
+| 6 | Dashboard, documentation, runbook, nettoyage | en cours |
 
 ## Architecture visée
 
@@ -98,6 +98,7 @@ src/trading_bot/
   execution/         application des fills au grand livre
   persistence/       modèles SQLAlchemy et accès aux données
   observability/     logs JSON structurés, masquage des secrets, métriques custom
+  dashboard/         FastAPI + HTMX, lecture seule, rendu serveur
   cycle.py           orchestration d'un cycle
   bootstrap.py       composition root : c'est le seul module qui choisit un backend
   __main__.py        point d'entrée du job

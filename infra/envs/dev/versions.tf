@@ -14,6 +14,14 @@ terraform {
       source  = "hashicorp/time"
       version = "~> 0.12"
     }
+    azuread = {
+      source  = "hashicorp/azuread"
+      version = "~> 3.0"
+    }
+    azapi = {
+      source  = "Azure/azapi"
+      version = "~> 2.0"
+    }
   }
 
   # Created by infra/bootstrap. No access key: authentication is Entra ID, so
@@ -27,8 +35,17 @@ terraform {
   }
 }
 
+provider "azuread" {}
+
+provider "azapi" {}
+
 provider "azurerm" {
   subscription_id = var.subscription_id
+
+  # Reach the blob and queue data planes with the caller's Entra ID identity.
+  # Without this the provider reads storage properties with a shared key, which
+  # fails outright on an account that has key based authentication disabled.
+  storage_use_azuread = true
 
   features {
     key_vault {

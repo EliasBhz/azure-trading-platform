@@ -17,3 +17,18 @@ output "migrate_job_name" {
   description = "Manually triggered job running Alembic migrations."
   value       = one(azurerm_container_app_job.migrate[*].name)
 }
+
+output "dashboard_fqdn" {
+  description = "Public host name of the dashboard. Null when the dashboard is disabled."
+  value       = one(azurerm_container_app.dashboard[*].ingress[0].fqdn)
+}
+
+output "dashboard_name" {
+  description = "Dashboard Container App name."
+  value       = one(azurerm_container_app.dashboard[*].name)
+}
+
+output "dashboard_client_id" {
+  description = "Entra ID application users sign in to."
+  value       = one(azuread_application.dashboard[*].client_id)
+}

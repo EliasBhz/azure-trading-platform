@@ -1,0 +1,145 @@
+{#
+  Rendered both inside the page and on its own for the HTMX poll, so the markup
+  exists once. The outer element carries the hx- attributes because the swap
+  replaces itself, and without them the second render would stop polling.
+#}
+<div
+  id="overview"
+  hx-get="/fragments/overview"
+  hx-trigger="every 60s"
+  hx-swap="outerHTML"
+>
+  {% if overview.is_stale %}
+    <p class="banner">
+      {% if overview.minutes_since_last_cycle is none %}
+        No cycle has ever completed. The bot has not run against this database.
+      {% else %}
+        Last completed cycle was {{ overview.minutes_since_last_cycle }} minutes
+        ago. Three or more scheduled runs have been missed.
+      {% endif %}
+    </p>
+  {% endif %}
+
+  <dl class="tiles">
+    <div class="tile">
+      <dt>Equity</dt>
+      <dd>{{ "%.2f"|format(overview.latest.equity) if overview.latest else "—" }}</dd>
+    </div>
+    <div class="tile">
+      <dt>Drawdown today</dt>
+      <dd>{{ "%.2f%%"|format(overview.latest.drawdown_ratio * 100) if overview.latest else "—" }}</dd>
+    </div>
+    <div class="tile">
+      <dt>Open positions</dt>
+      <dd>{{ overview.positions|length }}</dd>
+    </div>
+    <div class="tile">
+      <dt>Last cycle</dt>
+      <dd>
+        {% if overview.minutes_since_last_cycle is none %}—
+        {% elif overview.minutes_since_last_cycle < 1 %}just now
+        {% else %}{{ overview.minutes_since_last_cycle }} min ago
+        {% endif %}
+      </dd>
+    </div>
+  </dl>
+
+  <section>
+    <h2>Equity, last 24 hours</h2>
+    {% if sparkline %}
+      <svg viewBox="0 0 720 120" preserveAspectRatio="none"
+           style="width:100%;height:120px" role="img"
+           aria-label="Equity over the last 24 hours">
+        <polyline points="{{ sparkline }}" fill="none"
+                  stroke="var(--accent)" stroke-width="2"
+                  stroke-linejoin="round" stroke-linecap="round" />
+      </svg>
+    {% else %}
+      <p class="empty">Not enough snapshots yet to draw a line.</p>
+    {% endif %}
+  </section>
+
+  <section>
+    <h2>Positions</h2>
+    {% if overview.positions %}
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr><th>Symbol</th><th>Quantity</th><th>Average price</th><th>Updated</th></tr>
+          </thead>
+          <tbody>
+            {% for position in overview.positions %}
+              <tr>
+                <td>{{ position.symbol }}</td>
+                <td>{{ position.quantity.normalize() }}</td>
+                <td>{{ "%.2f"|format(position.average_price) }}</td>
+                <td>{{ position.updated_at.strftime("%Y-%m-%d %H:%M") }} UTC</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="empty">Flat. The bot holds nothing.</p>
+    {% endif %}
+  </section>
+
+  <section>
+    <h2>Recent orders</h2>
+    {% if overview.orders %}
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>When</th><th>Side</th><th>Quantity</th><th>Price</th>
+              <th>Status</th><th>Fees</th><th>Why</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in overview.orders %}
+              <tr>
+                <td>{{ order.created_at.strftime("%m-%d %H:%M") }}</td>
+                <td>{{ order.side }}</td>
+                <td>{{ order.filled_quantity.normalize() }}</td>
+                <td>{{ "%.2f"|format(order.reference_price) }}</td>
+                <td>{{ order.status }}</td>
+                <td>{{ "%.4f"|format(order.fees_quote) }}</td>
+                <td>{{ order.decision_reason }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="empty">No order has been submitted yet.</p>
+    {% endif %}
+  </section>
+
+  {# Refusals are shown beside orders on purpose: "why did the bot do nothing"
+     is the question this project has to be able to answer, and a dashboard that
+     only lists trades cannot answer it. #}
+  <section>
+    <h2>Recent decisions, including the refusals</h2>
+    {% if overview.decisions %}
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr><th>Bar</th><th>Action</th><th>Reason</th><th>Strategy</th></tr>
+          </thead>
+          <tbody>
+            {% for decision in overview.decisions %}
+              <tr>
+                <td>{{ decision.as_of.strftime("%m-%d %H:%M") }}</td>
+                <td>{{ decision.action }}</td>
+                <td>{{ decision.reason }}</td>
+                <td><code>{{ decision.strategy }}</code></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="empty">No signal has been recorded yet.</p>
+    {% endif %}
+  </section>
+</div>

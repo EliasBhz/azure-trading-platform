@@ -96,3 +96,46 @@ variable "jobs_enabled" {
   type        = bool
   default     = true
 }
+
+variable "dashboard_enabled" {
+  description = "Create the dashboard Container App. Off until the image exists, for the same reason the jobs are."
+  type        = bool
+  default     = true
+}
+
+variable "key_vault_id" {
+  description = "Vault holding the dashboard's Entra ID client secret. Passed in rather than created here so the module stays free of vault lifecycle."
+  type        = string
+}
+
+variable "tenant_id" {
+  description = "Entra ID tenant issuing dashboard sign-in tokens."
+  type        = string
+}
+
+variable "deployer_object_id" {
+  description = "Owner recorded on the dashboard app registration, so it is never left ownerless."
+  type        = string
+}
+
+variable "dashboard_allowed_principal_ids" {
+  description = "Object ids allowed to sign in. Empty means anyone in the tenant, which for a single-user tenant is the same thing stated less precisely."
+  type        = list(string)
+  default     = []
+}
+
+variable "client_secret_end_date" {
+  description = "Expiry of the dashboard's Entra ID client secret. A credential without an expiry is one nobody ever rotates."
+  type        = string
+  default     = "2027-09-01T00:00:00Z"
+}
+
+variable "user_assigned_identity_principal_id" {
+  description = "Principal id of the workload identity, needed to grant it access to the token store."
+  type        = string
+}
+
+variable "token_store_account_name" {
+  description = "Storage account holding dashboard session tokens. Globally unique, lowercase alphanumeric."
+  type        = string
+}

@@ -5,6 +5,22 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 4.0"
     }
+    azuread = {
+      source  = "hashicorp/azuread"
+      version = "~> 3.0"
+    }
+    # azurerm has no resource for Container Apps authentication. azapi is the
+    # provider Microsoft maintains for exactly this gap, and it keeps the
+    # configuration declarative instead of pushing it into a CLI call that runs
+    # outside Terraform and leaves no state.
+    azapi = {
+      source  = "Azure/azapi"
+      version = "~> 2.0"
+    }
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.12"
+    }
   }
 }
 
