@@ -181,3 +181,9 @@ variable "no_cycle_window" {
   type        = string
   default     = "PT45M"
 }
+
+variable "dashboard_allowed_principal_ids" {
+  description = "Object ids allowed to sign in to the dashboard. Empty means anyone in the tenant."
+  type        = list(string)
+  default     = []
+}

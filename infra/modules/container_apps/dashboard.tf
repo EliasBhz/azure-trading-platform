@@ -28,6 +28,15 @@ resource "azurerm_container_app" "dashboard" {
     }
   }
 
+  # Easy Auth reads the client secret from the app's own secret store by name,
+  # so it has to be declared here as well as in the auth config. Versionless, so
+  # rotating the credential does not require a new revision.
+  secret {
+    name                = local.client_secret_name
+    key_vault_secret_id = azurerm_key_vault_secret.dashboard_client_secret[0].versionless_id
+    identity            = var.user_assigned_identity_id
+  }
+
   ingress {
     external_enabled = true
     target_port      = 8000

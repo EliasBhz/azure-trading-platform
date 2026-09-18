@@ -62,3 +62,8 @@ output "dashboard_url" {
   description = "Dashboard address. Protected by Entra ID once Easy Auth is configured."
   value       = module.container_apps.dashboard_fqdn != null ? "https://${module.container_apps.dashboard_fqdn}" : null
 }
+
+output "dashboard_client_id" {
+  description = "Entra ID application users sign in to before reaching the dashboard."
+  value       = module.container_apps.dashboard_client_id
+}

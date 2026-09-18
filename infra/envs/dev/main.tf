@@ -164,7 +164,12 @@ module "container_apps" {
   cron_expression            = var.cron_expression
   jobs_enabled               = var.jobs_enabled
   dashboard_enabled          = var.dashboard_enabled
-  tags                       = local.tags
+  key_vault_id               = module.keyvault.id
+  tenant_id                  = data.azurerm_client_config.current.tenant_id
+  deployer_object_id         = data.azurerm_client_config.current.object_id
+
+  dashboard_allowed_principal_ids = var.dashboard_allowed_principal_ids
+  tags                            = local.tags
 
   secrets = {
     "database-url"                  = module.keyvault.secret_versionless_ids["database-url"]

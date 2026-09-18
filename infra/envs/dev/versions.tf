@@ -14,6 +14,14 @@ terraform {
       source  = "hashicorp/time"
       version = "~> 0.12"
     }
+    azuread = {
+      source  = "hashicorp/azuread"
+      version = "~> 3.0"
+    }
+    azapi = {
+      source  = "Azure/azapi"
+      version = "~> 2.0"
+    }
   }
 
   # Created by infra/bootstrap. No access key: authentication is Entra ID, so
@@ -26,6 +34,10 @@ terraform {
     use_azuread_auth     = true
   }
 }
+
+provider "azuread" {}
+
+provider "azapi" {}
 
 provider "azurerm" {
   subscription_id = var.subscription_id
