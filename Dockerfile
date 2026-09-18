@@ -13,12 +13,12 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --no-dev \
-    --extra db --extra exchange --extra azure --extra telemetry
+    --extra db --extra exchange --extra azure --extra telemetry --extra dashboard
 
 COPY src ./src
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev \
-    --extra db --extra exchange --extra azure --extra telemetry
+    --extra db --extra exchange --extra azure --extra telemetry --extra dashboard
 
 
 FROM python:3.12-slim-bookworm AS runtime
