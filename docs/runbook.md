@@ -121,23 +121,59 @@ data action.
     Error: making Read request on Azure KeyVault Secret ...
     StatusCode=403 ... Assignment: (not found)
 
-The environment was last applied by a different identity, usually the CI
-pipeline, and only that identity holds Key Vault Secrets Officer on the vault.
-Terraform cannot read the existing secrets to build a plan.
+Your identity holds no Key Vault Secrets Officer role on the vault, so Terraform
+cannot read the existing secrets to build a plan. Being subscription Owner is
+not enough: that is a control-plane role and reading a secret is a data action.
 
-The configuration grants the role to a set of principals, including whoever is
-running apply, but that cannot apply itself without the permission it grants.
-Break the cycle once:
+The configuration grants the role to every identity listed in
+`secret_writer_principal_ids`, but it cannot apply itself without the permission
+it grants. Break the cycle with a targeted apply, which refreshes only the
+role assignment and therefore never touches the secrets:
 
-    az role assignment create       --assignee-object-id $(az ad signed-in-user show --query id -o tsv)       --assignee-principal-type User       --role "Key Vault Secrets Officer"       --scope <KEY_VAULT_RESOURCE_ID>
+    terraform -chdir=infra/envs/dev apply       -target='module.keyvault.azurerm_role_assignment.secrets_officer["operator"]'       -var subscription_id=<SUBSCRIPTION_ID>
 
-Then import it so the state matches the configuration, otherwise the next apply
-tries to create an assignment Azure already has and fails on the duplicate:
+Terraform warns that applied changes may be incomplete. That is expected and is
+the point of the targeted run.
 
-    terraform import 'module.keyvault.azurerm_role_assignment.secrets_officer["caller"]' <ROLE_ASSIGNMENT_ID>
+Role assignments are eventually consistent. If the next plan still returns 403,
+wait and retry rather than granting anything else.
 
-Role assignments are eventually consistent. Wait for the read to succeed before
-planning.
+If your identity is not in the variable's default, add it there first. Do not
+grant it out of band with `az role assignment create`: Terraform would then plan
+to create an assignment Azure already has and the next apply fails with
+`RoleAssignmentExists`.
+
+## "RoleAssignmentExists" during a deployment
+
+    Error: unexpected status 409 (409 Conflict) with error: RoleAssignmentExists
+
+Two entries in `secret_writer_principal_ids` resolve to the same principal. A
+role assignment is identified by principal, scope and role, so Azure rejects the
+duplicate even though the map keys differ.
+
+This happened when one entry was derived from whoever ran apply: locally it
+resolved to a person, in the pipeline to the pipeline's own service principal,
+which already had its own named entry. Worse, each run destroyed the other
+identity's assignment before trying to recreate it.
+
+Never derive an entry from the caller. List every identity explicitly, so the
+plan is identical no matter who runs it.
+
+### If a failed deployment left the environment without its jobs
+
+A failed `Apply the platform` step can destroy the Container Apps jobs before
+failing, because the first pass runs with `jobs_enabled=false`. The bot then
+stops trading silently, which the no-cycle alert reports within forty-five
+minutes.
+
+Confirm and repair:
+
+    az containerapp job list -g <RG> --query "[].name" -o tsv
+    terraform -chdir=infra/envs/dev apply       -var subscription_id=<SUBSCRIPTION_ID>       -var image_tag=<SHA ALREADY IN THE REGISTRY>
+
+Pass the tag that is already in the registry. Applying with the default tag
+would point the jobs at an image that may not exist and Azure rejects the job
+with `MANIFEST_UNKNOWN`.
 
 ## Rebuilding the whole environment from scratch
 

@@ -145,10 +145,17 @@ variable "acr_push_principal_ids" {
   default     = { cicd = "76975942-91f3-467b-9b18-9fbf5eb3208e" }
 }
 
+# Every identity that may run apply, named explicitly. Nothing here is derived
+# from the caller: an entry that changes with who is running produces a plan
+# that differs between a person and the pipeline, which is exactly the drift
+# this variable exists to remove. Object ids are identifiers, not credentials.
 variable "secret_writer_principal_ids" {
-  description = "Identities besides the caller that may write Key Vault secrets. The pipeline is listed so a local plan does not propose removing its access."
+  description = "Identities that may write Key Vault secrets. Listing all of them keeps a plan identical no matter who runs it."
   type        = map(string)
-  default     = { cicd = "76975942-91f3-467b-9b18-9fbf5eb3208e" }
+  default = {
+    cicd     = "76975942-91f3-467b-9b18-9fbf5eb3208e"
+    operator = "1db27835-e548-4c05-affe-6109294744f3"
+  }
 }
 
 variable "alert_contact_emails" {
