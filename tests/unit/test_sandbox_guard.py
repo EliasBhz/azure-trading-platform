@@ -52,7 +52,7 @@ def test_ccxt_gateway_refuses_to_be_built_outside_sandbox() -> None:
 
 def test_settings_reject_unknown_fields() -> None:
     with pytest.raises(ValueError, match="extra_forbidden"):
-        Settings(_env_file=None, force_live=True)  # type: ignore[call-arg]
+        Settings(_env_file=None, force_live=True)
 
 
 def test_fast_window_must_be_shorter_than_slow_window() -> None:

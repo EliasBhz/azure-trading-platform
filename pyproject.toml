@@ -61,6 +61,10 @@ select = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["ARG"]
+# NullTelemetry implements the Telemetry protocol by doing nothing. Its
+# parameters exist to match the protocol, so "unused argument" is the point
+# rather than a defect.
+"src/trading_bot/observability/telemetry.py" = ["ARG002"]
 
 [tool.mypy]
 python_version = "3.12"
