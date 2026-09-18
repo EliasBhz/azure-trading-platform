@@ -113,20 +113,13 @@ module "postgres" {
 module "keyvault" {
   source = "../../modules/keyvault"
 
-  name                       = "kv-${local.name_prefix}-${random_string.suffix.result}"
-  resource_group_name        = azurerm_resource_group.this.name
-  location                   = azurerm_resource_group.this.location
-  tenant_id                  = data.azurerm_client_config.current.tenant_id
-  log_analytics_workspace_id = module.observability.workspace_id
-  # Whoever is running apply, plus every other identity that ever will. The
-  # caller is merged in so a newcomer can apply without editing configuration,
-  # and the pipeline is always present so a local plan never proposes removing
-  # it.
-  secret_writer_principal_ids = merge(
-    { caller = data.azurerm_client_config.current.object_id },
-    var.secret_writer_principal_ids,
-  )
-  tags = local.tags
+  name                        = "kv-${local.name_prefix}-${random_string.suffix.result}"
+  resource_group_name         = azurerm_resource_group.this.name
+  location                    = azurerm_resource_group.this.location
+  tenant_id                   = data.azurerm_client_config.current.tenant_id
+  log_analytics_workspace_id  = module.observability.workspace_id
+  secret_writer_principal_ids = var.secret_writer_principal_ids
+  tags                        = local.tags
 
   secret_reader_principal_ids = {
     workload = azurerm_user_assigned_identity.workload.principal_id

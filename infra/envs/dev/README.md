@@ -155,7 +155,7 @@ clearing it, which is drift that never converges.
 | <a name="input_owner"></a> [owner](#input\_owner) | Value of the mandatory owner tag. | `string` | `"eliasbaghazou"` | no |
 | <a name="input_project_short_name"></a> [project\_short\_name](#input\_project\_short\_name) | Short project name used to build resource names. | `string` | `"tradingbot"` | no |
 | <a name="input_resource_group_name"></a> [resource\_group\_name](#input\_resource\_group\_name) | Single resource group holding the whole environment. | `string` | `"rg-tradingbot-dev-neu"` | no |
-| <a name="input_secret_writer_principal_ids"></a> [secret\_writer\_principal\_ids](#input\_secret\_writer\_principal\_ids) | Identities besides the caller that may write Key Vault secrets. The pipeline is listed so a local plan does not propose removing its access. | `map(string)` | <pre>{<br/>  "cicd": "76975942-91f3-467b-9b18-9fbf5eb3208e"<br/>}</pre> | no |
+| <a name="input_secret_writer_principal_ids"></a> [secret\_writer\_principal\_ids](#input\_secret\_writer\_principal\_ids) | Identities that may write Key Vault secrets. Listing all of them keeps a plan identical no matter who runs it. | `map(string)` | <pre>{<br/>  "cicd": "76975942-91f3-467b-9b18-9fbf5eb3208e",<br/>  "operator": "1db27835-e548-4c05-affe-6109294744f3"<br/>}</pre> | no |
 | <a name="input_subscription_id"></a> [subscription\_id](#input\_subscription\_id) | Azure subscription the environment is deployed into. | `string` | n/a | yes |
 | <a name="input_symbol"></a> [symbol](#input\_symbol) | Traded pair. | `string` | `"BTC/USDT"` | no |
 | <a name="input_timeframe"></a> [timeframe](#input\_timeframe) | Candle timeframe. Must be consistent with the cron schedule. | `string` | `"15m"` | no |
