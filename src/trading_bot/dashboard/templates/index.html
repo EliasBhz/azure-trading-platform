@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Trading bot</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #fbfbfa;
+        --panel: #ffffff;
+        --ink: #1d1c1a;
+        --muted: #6b6a66;
+        --line: #e4e2dd;
+        --accent: #2f6f4f;
+        --warn: #9a3b2f;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #16150f;
+          --panel: #1e1d17;
+          --ink: #eceae3;
+          --muted: #9a978d;
+          --line: #302e26;
+          --accent: #7fb89a;
+          --warn: #d98b7d;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 2rem 1.25rem 4rem;
+        background: var(--bg);
+        color: var(--ink);
+        font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      main { max-width: 68rem; margin: 0 auto; }
+      h1 { font-size: 1.35rem; margin: 0 0 .25rem; letter-spacing: -.01em; }
+      .lede { color: var(--muted); margin: 0 0 1.75rem; font-size: .9rem; }
+      .banner {
+        border: 1px solid var(--warn);
+        color: var(--warn);
+        border-radius: .5rem;
+        padding: .7rem .9rem;
+        margin-bottom: 1.5rem;
+        font-size: .9rem;
+      }
+      .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: .75rem; margin-bottom: 1.5rem; }
+      .tile { background: var(--panel); border: 1px solid var(--line); border-radius: .6rem; padding: .85rem 1rem; }
+      .tile dt { color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; margin: 0 0 .3rem; }
+      .tile dd { margin: 0; font-size: 1.3rem; font-variant-numeric: tabular-nums; }
+      section { background: var(--panel); border: 1px solid var(--line); border-radius: .6rem; padding: 1rem 1.15rem; margin-bottom: 1.25rem; }
+      section h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 .8rem; font-weight: 600; }
+      table { width: 100%; border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; }
+      th { text-align: left; color: var(--muted); font-weight: 500; padding: .35rem .6rem .35rem 0; border-bottom: 1px solid var(--line); }
+      td { padding: .4rem .6rem .4rem 0; border-bottom: 1px solid var(--line); }
+      tr:last-child td { border-bottom: 0; }
+      .empty { color: var(--muted); font-size: .85rem; margin: 0; }
+      .scroll { overflow-x: auto; }
+      footer { color: var(--muted); font-size: .78rem; margin-top: 2rem; }
+      code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .95em; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Trading bot</h1>
+      <p class="lede">
+        Paper trading only. Every figure comes from the bot's own ledger, which
+        is the same source its risk limits are evaluated against.
+      </p>
+
+      <!-- Polling rather than a websocket: the bot writes once every fifteen
+           minutes, and a scale-to-zero container that has to hold a socket open
+           never scales to zero. The fragment carries its own hx- attributes, so
+           it keeps polling after it has replaced itself. -->
+      {% include "_overview.html" %}
+
+      <footer>
+        This is not investment advice. The bot trades against an exchange testnet
+        or a deterministic simulator, and has no code path to live trading.
+      </footer>
+    </main>
+
+    <script src="/static/htmx.min.js" defer></script>
+  </body>
+</html>
