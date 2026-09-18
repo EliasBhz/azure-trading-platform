@@ -24,6 +24,7 @@ No modules.
 
 | Name | Type |
 | ---- | ---- |
+| [azurerm_container_app.dashboard](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/container_app) | resource |
 | [azurerm_container_app_environment.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/container_app_environment) | resource |
 | [azurerm_container_app_job.migrate](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/container_app_job) | resource |
 | [azurerm_container_app_job.trading_cycle](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/container_app_job) | resource |
@@ -34,6 +35,7 @@ No modules.
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_cpu"></a> [cpu](#input\_cpu) | vCPU per replica. 0.25 is the smallest Consumption allows. | `number` | `0.25` | no |
 | <a name="input_cron_expression"></a> [cron\_expression](#input\_cron\_expression) | Schedule for the trading cycle, in UTC. | `string` | `"*/15 * * * *"` | no |
+| <a name="input_dashboard_enabled"></a> [dashboard\_enabled](#input\_dashboard\_enabled) | Create the dashboard Container App. Off until the image exists, for the same reason the jobs are. | `bool` | `true` | no |
 | <a name="input_environment_variables"></a> [environment\_variables](#input\_environment\_variables) | Plain environment variables passed to every job. | `map(string)` | `{}` | no |
 | <a name="input_image"></a> [image](#input\_image) | Fully qualified image reference, including the tag. | `string` | n/a | yes |
 | <a name="input_infrastructure_subnet_id"></a> [infrastructure\_subnet\_id](#input\_infrastructure\_subnet\_id) | Subnet the environment is injected into. Must be /23 or larger. | `string` | n/a | yes |
@@ -55,6 +57,8 @@ No modules.
 
 | Name | Description |
 | ---- | ----------- |
+| <a name="output_dashboard_fqdn"></a> [dashboard\_fqdn](#output\_dashboard\_fqdn) | Public host name of the dashboard. Null when the dashboard is disabled. |
+| <a name="output_dashboard_name"></a> [dashboard\_name](#output\_dashboard\_name) | Dashboard Container App name. |
 | <a name="output_environment_default_domain"></a> [environment\_default\_domain](#output\_environment\_default\_domain) | Default domain of the environment, used later by the dashboard ingress. |
 | <a name="output_environment_id"></a> [environment\_id](#output\_environment\_id) | Container Apps environment resource id. |
 | <a name="output_migrate_job_name"></a> [migrate\_job\_name](#output\_migrate\_job\_name) | Manually triggered job running Alembic migrations. |

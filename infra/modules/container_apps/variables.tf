@@ -96,3 +96,9 @@ variable "jobs_enabled" {
   type        = bool
   default     = true
 }
+
+variable "dashboard_enabled" {
+  description = "Create the dashboard Container App. Off until the image exists, for the same reason the jobs are."
+  type        = bool
+  default     = true
+}

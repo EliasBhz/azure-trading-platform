@@ -57,3 +57,8 @@ output "alert_names" {
   description = "Alert rules watching the bot."
   value       = module.alerts.alert_names
 }
+
+output "dashboard_url" {
+  description = "Dashboard address. Protected by Entra ID once Easy Auth is configured."
+  value       = module.container_apps.dashboard_fqdn != null ? "https://${module.container_apps.dashboard_fqdn}" : null
+}

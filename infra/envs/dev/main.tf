@@ -163,6 +163,7 @@ module "container_apps" {
   image                      = "${module.acr.login_server}/${var.image_repository}:${var.image_tag}"
   cron_expression            = var.cron_expression
   jobs_enabled               = var.jobs_enabled
+  dashboard_enabled          = var.dashboard_enabled
   tags                       = local.tags
 
   secrets = {

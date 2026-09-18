@@ -129,6 +129,12 @@ variable "budget_end_date" {
   default     = "2030-01-01T00:00:00Z"
 }
 
+variable "dashboard_enabled" {
+  description = "Create the dashboard Container App. The deployment pipeline sets this to false on the apply that precedes pushing the image, for the same reason jobs_enabled exists."
+  type        = bool
+  default     = true
+}
+
 variable "jobs_enabled" {
   description = "Create the Container Apps jobs. The deployment pipeline sets this to false on the apply that precedes pushing the image, because Azure validates the image manifest when a job is created."
   type        = bool
