@@ -1,0 +1,98 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "# Trading bot\n\nPaper trading only. Every number here comes from the bot's own structured logs, so the panels and the alerts read the same source: if a panel is empty, the alert that depends on it is blind too."
+      },
+      "name": "header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "ContainerAppConsoleLogs_CL\n| where ContainerName_s == \"trading-cycle\"\n| extend payload = parse_json(Log_s)\n| where tostring(payload.message) == \"cycle.completed\"\n| project TimeGenerated, Equity = todouble(payload.equity_quote)\n| order by TimeGenerated asc",
+        "size": 0,
+        "title": "Equity curve",
+        "timeContext": { "durationMs": 86400000 },
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "linechart"
+      },
+      "name": "equity-curve"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "ContainerAppConsoleLogs_CL\n| where ContainerName_s == \"trading-cycle\"\n| extend payload = parse_json(Log_s)\n| where tostring(payload.message) == \"cycle.completed\"\n| project TimeGenerated, Drawdown = todouble(payload.drawdown_ratio)\n| order by TimeGenerated asc",
+        "size": 0,
+        "title": "Intraday drawdown against the day's opening equity",
+        "timeContext": { "durationMs": 86400000 },
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "areachart"
+      },
+      "name": "drawdown"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "ContainerAppConsoleLogs_CL\n| where ContainerName_s == \"trading-cycle\"\n| extend payload = parse_json(Log_s)\n| where tostring(payload.message) == \"cycle.decision\"\n| summarize Cycles = count() by Outcome = tostring(payload.outcome), Reason = tostring(payload.reason)\n| order by Cycles desc",
+        "size": 0,
+        "title": "Why the bot did what it did",
+        "timeContext": { "durationMs": 86400000 },
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table"
+      },
+      "name": "decisions"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "ContainerAppConsoleLogs_CL\n| where ContainerName_s == \"trading-cycle\"\n| extend payload = parse_json(Log_s)\n| where tostring(payload.message) == \"cycle.executed\"\n| project TimeGenerated, ClientOrderId = tostring(payload.client_order_id), Status = tostring(payload.status), Quantity = tostring(payload.filled_quantity), Fees = tostring(payload.fees_quote)\n| order by TimeGenerated desc\n| take 20",
+        "size": 0,
+        "title": "Recent orders",
+        "timeContext": { "durationMs": 86400000 },
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table"
+      },
+      "name": "orders"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "ContainerAppConsoleLogs_CL\n| where ContainerName_s == \"trading-cycle\"\n| extend payload = parse_json(Log_s)\n| where tostring(payload.message) == \"cycle.completed\"\n| summarize LastCycle = max(TimeGenerated)\n| extend MinutesSinceLastCycle = datetime_diff('minute', now(), LastCycle)",
+        "size": 4,
+        "title": "Minutes since the last completed cycle",
+        "timeContext": { "durationMs": 86400000 },
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "tiles"
+      },
+      "name": "freshness"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "ContainerAppConsoleLogs_CL\n| where ContainerName_s in (\"trading-cycle\", \"migrate\")\n| extend payload = parse_json(Log_s)\n| where tostring(payload.message) in (\"cycle.failed\", \"cycle.crashed\")\n| project TimeGenerated, Message = tostring(payload.message), ErrorType = tostring(payload.error_type), Error = tostring(payload.error)\n| order by TimeGenerated desc\n| take 20",
+        "size": 0,
+        "title": "Failures",
+        "timeContext": { "durationMs": 604800000 },
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table"
+      },
+      "name": "failures"
+    }
+  ],
+  "fallbackResourceIds": ["${workspace_id}"],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}
