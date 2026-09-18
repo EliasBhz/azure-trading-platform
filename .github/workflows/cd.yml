@@ -70,8 +70,7 @@ jobs:
         run: |
           terraform apply -input=false -auto-approve \
             -var subscription_id="${ARM_SUBSCRIPTION_ID}" \
-            -var jobs_enabled=false \
-            -var acr_push_principal_ids='{"cicd":"${{ vars.AZURE_DEPLOY_PRINCIPAL_ID }}"}'
+            -var jobs_enabled=false
 
       - name: Read the registry
         id: registry
@@ -104,8 +103,7 @@ jobs:
           terraform apply -input=false -auto-approve \
             -var subscription_id="${ARM_SUBSCRIPTION_ID}" \
             -var jobs_enabled=true \
-            -var image_tag="${{ github.sha }}" \
-            -var acr_push_principal_ids='{"cicd":"${{ vars.AZURE_DEPLOY_PRINCIPAL_ID }}"}'
+            -var image_tag="${{ github.sha }}"
 
       # The database has no public endpoint, so this is the only place
       # migrations can run from. See ADR-0009.
