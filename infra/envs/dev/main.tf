@@ -118,8 +118,15 @@ module "keyvault" {
   location                   = azurerm_resource_group.this.location
   tenant_id                  = data.azurerm_client_config.current.tenant_id
   log_analytics_workspace_id = module.observability.workspace_id
-  deployer_object_id         = data.azurerm_client_config.current.object_id
-  tags                       = local.tags
+  # Whoever is running apply, plus every other identity that ever will. The
+  # caller is merged in so a newcomer can apply without editing configuration,
+  # and the pipeline is always present so a local plan never proposes removing
+  # it.
+  secret_writer_principal_ids = merge(
+    { caller = data.azurerm_client_config.current.object_id },
+    var.secret_writer_principal_ids,
+  )
+  tags = local.tags
 
   secret_reader_principal_ids = {
     workload = azurerm_user_assigned_identity.workload.principal_id
@@ -190,6 +197,19 @@ module "container_apps" {
   }
 }
 
+module "alerts" {
+  source = "../../modules/alerts"
+
+  name_prefix                = local.name_prefix
+  resource_group_name        = azurerm_resource_group.this.name
+  location                   = azurerm_resource_group.this.location
+  log_analytics_workspace_id = module.observability.workspace_id
+  contact_emails             = var.alert_contact_emails
+  drawdown_alert_ratio       = var.drawdown_alert_ratio
+  no_cycle_window            = var.no_cycle_window
+  tags                       = local.tags
+}
+
 # A budget alerts, it does not stop anything. The only control that actually
 # caps spend here is destroying the environment, which is why the stack is built
 # to be destroyed and recreated.
@@ -222,4 +242,17 @@ resource "azurerm_consumption_budget_resource_group" "this" {
     # comparing it against a literal produces a diff on every plan.
     ignore_changes = [time_period[0].start_date]
   }
+}
+
+# The Key Vault writer role used to be a single assignment derived from whoever
+# ran apply. It is now a set. Without this block Terraform would destroy the old
+# resource and create a new one with the same principal, scope and role, and
+# Azure rejects a duplicate role assignment, so the apply would fail halfway.
+#
+# The key is "cicd" because the pipeline performed the last apply, which is what
+# the existing assignment records. Declared at the root rather than inside the
+# module so the module stays free of this environment's history.
+moved {
+  from = module.keyvault.azurerm_role_assignment.deployer_secrets_officer
+  to   = module.keyvault.azurerm_role_assignment.secrets_officer["cicd"]
 }

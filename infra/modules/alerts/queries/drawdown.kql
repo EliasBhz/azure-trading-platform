@@ -1,0 +1,10 @@
+// Intraday drawdown against the day's opening equity. The policy engine already
+// refuses to trade past the daily loss limit; this alert exists to say that it
+// happened, because a bot that correctly stops trading looks identical to a bot
+// that has quietly died.
+ContainerAppConsoleLogs_CL
+| where ContainerName_s == "trading-cycle"
+| extend payload = parse_json(Log_s)
+| where tostring(payload.message) == "cycle.completed"
+| extend Drawdown = todouble(payload.drawdown_ratio)
+| summarize MaxDrawdown = max(Drawdown)

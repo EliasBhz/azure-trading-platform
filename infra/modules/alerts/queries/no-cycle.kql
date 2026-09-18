@@ -1,0 +1,11 @@
+// Silence is the failure mode a scheduled job has that a running service does
+// not: nothing errors, nothing alerts, and the bot simply stops trading.
+//
+// summarize without a by clause always returns exactly one row, including zero.
+// Without it the query returns no rows when nothing ran, and an alert on an
+// empty result set never fires, which is precisely the case being watched for.
+ContainerAppConsoleLogs_CL
+| where ContainerName_s == "trading-cycle"
+| extend payload = parse_json(Log_s)
+| where tostring(payload.message) == "cycle.completed"
+| summarize CompletedCycles = count()

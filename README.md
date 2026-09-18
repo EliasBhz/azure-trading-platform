@@ -24,10 +24,10 @@ dans le dépôt, pas ce qui est prévu.
 |---|---|---|
 | 1 | Scaffolding, CLAUDE.md, pre-commit, garde-fou sandbox | fait |
 | 2 | Bot en local, docker compose avec Postgres, tests | fait |
-| 3 | Bootstrap du state Terraform, infra dev | à faire |
+| 3 | Bootstrap du state Terraform, infra dev | fait |
 | 4 | CI/CD GitHub Actions avec OIDC | fait |
-| 5 | Observabilité, alertes, workbook, dashboard | à faire |
-| 6 | Documentation, ADR, runbook, nettoyage | à faire |
+| 5 | Observabilité, alertes, workbook | fait |
+| 6 | Dashboard, documentation, runbook, nettoyage | à faire |
 
 ## Architecture visée
 
@@ -97,7 +97,7 @@ src/trading_bot/
   policy/            pur et déterministe : limites de risque, sizing, kill switch
   execution/         application des fills au grand livre
   persistence/       modèles SQLAlchemy et accès aux données
-  observability/     logs JSON structurés et masquage des secrets
+  observability/     logs JSON structurés, masquage des secrets, métriques custom
   cycle.py           orchestration d'un cycle
   bootstrap.py       composition root : c'est le seul module qui choisit un backend
   __main__.py        point d'entrée du job
@@ -107,7 +107,7 @@ tests/integration/   nécessite Postgres, marquées `integration`
 infra/bootstrap/     state distant Terraform, appliqué une seule fois
 infra/github-oidc/   identités OIDC de GitHub Actions, aucun secret
 infra/governance/    budget d'abonnement et arrêt automatique sur dépassement
-infra/modules/       modules Terraform réutilisables
+infra/modules/       modules Terraform réutilisables, dont alerts/ et son workbook
 infra/envs/dev/      composition de l'environnement dev
 docs/adr/            une ADR par décision structurante
 docs/runbook.md      procédures d'incident
@@ -230,5 +230,5 @@ process outside sandbox mode, and the execution backend enum has no live member.
 This is enforced by unit tests and documented in
 [CLAUDE.md](CLAUDE.md).
 
-Build status: phase 4 of 6 complete. See the progress table above for what
+Build status: phase 5 of 6 complete. See the progress table above for what
 actually exists today.

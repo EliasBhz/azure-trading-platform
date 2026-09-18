@@ -2,7 +2,7 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import Self
 
-from pydantic import Field, PostgresDsn, SecretStr, model_validator
+from pydantic import AliasChoices, Field, PostgresDsn, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from trading_bot.errors import ConfigurationError, SandboxGuardError
@@ -65,6 +65,14 @@ class Settings(BaseSettings):
 
     database_url: PostgresDsn | None = None
     log_level: LogLevel = LogLevel.INFO
+
+    # Read from the unprefixed name every Azure tool expects, rather than
+    # BOT_-prefixed like the rest. Renaming it would break automatic detection
+    # in the OpenTelemetry distro and in anything else that looks for it.
+    applicationinsights_connection_string: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices("APPLICATIONINSIGHTS_CONNECTION_STRING"),
+    )
 
     @model_validator(mode="after")
     def enforce_sandbox(self) -> Self:

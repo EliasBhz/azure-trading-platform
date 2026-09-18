@@ -72,6 +72,41 @@ class StubExchange:
         )
 
 
+class RecordingTelemetry:
+    """Telemetry that keeps what it was told, so the wiring can be asserted.
+
+    The exporter itself is not worth testing: it belongs to the Azure SDK. What
+    is worth testing is that the cycle calls it at all, because a metric nobody
+    records fails silently and is only noticed when a dashboard stays empty.
+    """
+
+    def __init__(self) -> None:
+        self.equity: list[tuple[Decimal, Decimal]] = []
+        self.decisions: list[str] = []
+        self.order_latencies: list[str] = []
+        self.cycle_durations: list[float] = []
+        self.errors: list[str] = []
+        self.flushes = 0
+
+    def record_equity(self, *, equity: Decimal, drawdown_ratio: Decimal, symbol: str) -> None:
+        self.equity.append((equity, drawdown_ratio))
+
+    def record_decision(self, *, outcome: str, symbol: str) -> None:
+        self.decisions.append(outcome)
+
+    def record_order_latency(self, *, milliseconds: float, symbol: str, side: str) -> None:
+        self.order_latencies.append(side)
+
+    def record_cycle_duration(self, *, milliseconds: float, symbol: str) -> None:
+        self.cycle_durations.append(milliseconds)
+
+    def record_error(self, *, error_type: str) -> None:
+        self.errors.append(error_type)
+
+    def flush(self) -> None:
+        self.flushes += 1
+
+
 @pytest.fixture(scope="session")
 def database_url() -> str:
     url = os.environ.get("TEST_DATABASE_URL")

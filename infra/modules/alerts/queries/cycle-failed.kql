@@ -1,0 +1,8 @@
+// A cycle that ended in failure. The bot writes these two events itself, so the
+// alert depends on our own contract rather than on a platform log schema that
+// Azure can change underneath it.
+ContainerAppConsoleLogs_CL
+| where ContainerName_s in ("trading-cycle", "migrate")
+| extend payload = parse_json(Log_s)
+| where tostring(payload.message) in ("cycle.failed", "cycle.crashed")
+| summarize FailureCount = count() by ErrorType = tostring(payload.error_type)

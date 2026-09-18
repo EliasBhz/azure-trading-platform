@@ -16,6 +16,7 @@ from trading_bot.exchange.base import ExchangeGateway
 from trading_bot.exchange.timeframes import is_stale
 from trading_bot.execution.ledger import apply_execution
 from trading_bot.observability.logging import get_logger
+from trading_bot.observability.telemetry import NullTelemetry, Telemetry, measure
 from trading_bot.persistence import repository
 from trading_bot.policy.engine import PolicyEngine
 from trading_bot.policy.kill_switch import KillSwitchSource
@@ -66,6 +67,7 @@ class TradingCycle:
         strategy: Strategy,
         policy: PolicyEngine,
         kill_switch: KillSwitchSource,
+        telemetry: Telemetry | None = None,
         symbol: str,
         timeframe: str,
         candle_limit: int,
@@ -76,6 +78,7 @@ class TradingCycle:
         self._strategy = strategy
         self._policy = policy
         self._kill_switch = kill_switch
+        self._telemetry = telemetry if telemetry is not None else NullTelemetry()
         self._symbol = symbol
         self._timeframe = timeframe
         self._candle_limit = candle_limit
@@ -83,6 +86,12 @@ class TradingCycle:
         self._clock = clock
 
     def run(self, session: Session) -> CycleResult:
+        with measure() as elapsed:
+            result = self._run(session)
+        self._telemetry.record_cycle_duration(milliseconds=elapsed[0], symbol=self._symbol)
+        return result
+
+    def _run(self, session: Session) -> CycleResult:
         now = self._clock()
         snapshot = self._gateway.fetch_snapshot(self._symbol, self._timeframe, self._candle_limit)
 
@@ -152,7 +161,13 @@ class TradingCycle:
                     client_order_id=intent.client_order_id,
                 )
             else:
-                execution = self._gateway.submit(intent)
+                with measure() as submit_elapsed:
+                    execution = self._gateway.submit(intent)
+                self._telemetry.record_order_latency(
+                    milliseconds=submit_elapsed[0],
+                    symbol=self._symbol,
+                    side=intent.side.value,
+                )
                 repository.record_execution(
                     session, cycle_id=cycle_id, decision=decision, execution=execution
                 )
@@ -179,6 +194,13 @@ class TradingCycle:
             day_opening_equity=account.day_opening_equity,
         )
         repository.record_equity_snapshot(session, cycle_id=cycle_id, snapshot=equity)
+
+        self._telemetry.record_decision(outcome=decision.outcome.value, symbol=self._symbol)
+        self._telemetry.record_equity(
+            equity=equity.equity_quote,
+            drawdown_ratio=equity.drawdown_ratio,
+            symbol=self._symbol,
+        )
 
         logger.info(
             "cycle.completed",
