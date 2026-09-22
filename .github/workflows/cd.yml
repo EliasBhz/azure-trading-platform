@@ -39,7 +39,7 @@ jobs:
           terraform_version: 1.16.2
           terraform_wrapper: false
 
-      - uses: azure/login@v2
+      - uses: azure/login@v3
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID_DEPLOY }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
