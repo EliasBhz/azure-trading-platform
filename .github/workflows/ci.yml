@@ -143,7 +143,7 @@ jobs:
       - name: Azure login
         id: login
         if: github.event.pull_request.head.repo.full_name == github.repository
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID_PLAN }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
