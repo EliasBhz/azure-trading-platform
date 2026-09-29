@@ -1,4 +1,4 @@
-FROM python:3.12-slim-bookworm AS builder
+FROM python:3.14-slim-bookworm AS builder
 
 COPY --from=ghcr.io/astral-sh/uv:0.12.14 /uv /usr/local/bin/uv
 
@@ -21,7 +21,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --extra db --extra exchange --extra azure --extra telemetry
 
 
-FROM python:3.12-slim-bookworm AS runtime
+FROM python:3.14-slim-bookworm AS runtime
 
 # Base images are rebuilt on their own schedule and lag behind Debian security
 # updates, so a freshly pulled tag can still carry vulnerabilities that upstream
